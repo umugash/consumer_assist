@@ -1,0 +1,123 @@
+{
+  "metadata": {
+    "title": "ConsumerAssist Verified Knowledge Base",
+    "description": "Curated knowledge base of Indian consumer protection laws, procedures, and platform-specific information",
+    "last_updated": "2026-11-01",
+    "disclaimer": "Procedural information and drafting assistance — not personalized legal advice or a guaranteed outcome."
+  },
+  "sections": [
+    {
+      "id": "CPA_2019",
+      "title": "Consumer Protection Act, 2019 — Key Provisions",
+      "category": "legislation",
+      "verification_date": "2026-10-15",
+      "source_url": "https://egazette.gov.in/WriteReadData/2019/210422.pdf",
+      "content": "The Consumer Protection Act, 2019 replaced the older 1986 Act and provides enhanced protection for consumers in India, including e-commerce transactions.\n\nKey provisions relevant to e-commerce grievances:\n\n1. **Section 2(7) - Consumer Definition**: Any person who buys goods or avails services for consideration, including through electronic/online means. Covers all e-commerce and quick-commerce purchases.\n\n2. **Section 2(47) - Unfair Trade Practice**: Includes false representation about quality, standard, quantity, grade, composition, style, model, or making false/misleading claims. Delivering expired food, wrong items, or items different from advertised falls under this.\n\n3. **Section 18 - Consumer Disputes Redressal Commission**: District Commission (claims up to ₹1 crore), State Commission (₹1 crore to ₹10 crore), National Commission (above ₹10 crore).\n\n4. **Section 34-37 - District Commission**: Complaint can be filed where the complainant resides or where the opposite party has a branch office or where the cause of action arose.\n\n5. **Section 35 - Filing a Complaint**: Complaint should include name and address of complainant, name and address of opposite party, facts relating to the complaint, documents supporting the complaint, and the relief sought.\n\n6. **Section 39 - Appeal**: Appeal against District Commission order to State Commission within 45 days.\n\n7. **Section 69 - Product Liability**: Manufacturer, seller, or service provider liable for harm caused by defective product or deficiency in service.\n\n8. **Section 83-87 - Central Consumer Protection Authority (CCPA)**: Can investigate and take suo motu action, issue directions, impose penalties for misleading advertisements and unfair trade practices.\n\nFiling Fee: No court fee for claims up to ₹5 lakh before District Commission. Nominal fees for higher amounts.",
+      "tags": ["legislation", "consumer_protection", "e-commerce", "complaint_filing"]
+    },
+    {
+      "id": "ECOMMERCE_RULES_2020",
+      "title": "Consumer Protection (E-Commerce) Rules, 2020",
+      "category": "legislation",
+      "verification_date": "2026-10-15",
+      "source_url": "https://consumeraffairs.nic.in/sites/default/files/E-Commerce_Rules_2020.pdf",
+      "content": "The Consumer Protection (E-Commerce) Rules, 2020 specifically regulate e-commerce entities and provide additional safeguards.\n\nKey Rules:\n\n1. **Rule 4 - Duties of E-Commerce Entity**: Every e-commerce platform must:\n   - Display legal/business name, registered address, and contact details prominently\n   - Appoint a Grievance Officer with name, contact details, and designation\n   - Ensure the grievance officer acknowledges complaints within 48 hours and resolves within one month\n   - Provide a ticket/docket number for each complaint\n\n2. **Rule 4(4) - Price Transparency**: Total price must include all compulsory charges. No hidden charges — all fees, taxes, handling charges must be clearly disclosed at checkout before payment.\n\n3. **Rule 4(7) - No False Representation**: Cannot falsely represent as a consumer or post false reviews.\n\n4. **Rule 5 - Duties of Sellers on Marketplace**: Must provide accurate description of goods, inform consumers about return/refund/exchange/warranty policies, and honor commitments.\n\n5. **Rule 6 - Cancellation & Refund**: Consumers' right to cancel before delivery. Refund must be processed within a reasonable period as stated in the platform's policy (typically 5-7 business days).\n\n6. **Rule 7 - Grievance Redressal Mechanism**: Every e-commerce entity must have a grievance redressal mechanism. Complaints to be resolved within 1 month.\n\n7. **Country of Origin**: Must be displayed for imported goods.\n\nViolation of these rules can be reported to the Central Consumer Protection Authority (CCPA) and also forms grounds for filing a complaint with the Consumer Commission.",
+      "tags": ["e-commerce", "rules", "grievance_officer", "price_transparency", "refund"]
+    },
+    {
+      "id": "NCH_PROCEDURE",
+      "title": "National Consumer Helpline (NCH) — Filing Procedure",
+      "category": "procedure",
+      "verification_date": "2026-10-20",
+      "source_url": "https://consumerhelpline.gov.in/",
+      "content": "The National Consumer Helpline (NCH) is the first official government recourse for consumer complaints before approaching the Consumer Commission.\n\n**How to File a Complaint with NCH:**\n\n1. **Toll-Free Number**: Call 1915 (available Mon-Sat, 9:30 AM to 5:30 PM)\n2. **Online Portal**: https://consumerhelpline.gov.in/\n3. **NCH Mobile App**: Available on Google Play / App Store\n4. **WhatsApp**: 8800001915\n5. **SMS**: 8800001915\n\n**Registration Steps (Online Portal):**\n1. Visit https://consumerhelpline.gov.in/\n2. Click 'Register Your Complaint'\n3. Create account with mobile number/email\n4. Fill complaint form with:\n   - Personal details\n   - Company/Brand name against which complaint is being filed\n   - Category of complaint\n   - Description of the issue\n   - Attach supporting documents (invoice, screenshots, correspondence)\n   - Specify relief sought\n5. Submit — receive Docket Number for tracking\n\n**What Happens After Filing:**\n- NCH forwards complaint to the company through its convergence partner system\n- Company is expected to respond within 15-30 days\n- NCH facilitates mediation between consumer and company\n- If unresolved, NCH advises further escalation to Consumer Commission\n\n**Required Documents for NCH Complaint:**\n- Copy of invoice/receipt\n- Proof of complaint to company (email/chat screenshots)\n- Company's response (if any)\n- Product photos (if applicable)\n- ID proof of complainant\n\n**Important Notes:**\n- NCH is a facilitative body — it mediates but cannot pass binding orders\n- If company does not respond or resolve within 30 days, escalate to Consumer Commission\n- NCH complaint serves as important evidence of having exhausted available remedies",
+      "tags": ["NCH", "national_consumer_helpline", "1915", "complaint_filing", "government"]
+    },
+    {
+      "id": "EJAGRITI_PROCEDURE",
+      "title": "e-Jagriti Portal — Consumer Commission Filing",
+      "category": "procedure",
+      "verification_date": "2026-10-20",
+      "source_url": "https://e-jagriti.gov.in/",
+      "content": "e-Jagriti is the official e-filing portal of the Consumer Commissions of India for online filing and tracking of consumer complaints.\n\n**Portal URL:** https://e-jagriti.gov.in/\n\n**Pre-Filing Requirements:**\n1. Must have first attempted resolution with the seller/platform directly\n2. Recommended (not mandatory) to have filed NCH complaint\n3. Complaint should be filed within 2 years from the date of cause of action\n\n**Documents Required for e-Jagriti Filing:**\n\n1. **Consumer Complaint (Main Petition)**\n   - Names & addresses of complainant (consumer) and opposite party (seller/platform)\n   - Facts of the case in chronological order\n   - Deficiency in service or defect in goods claimed\n   - Relief/compensation sought with specific amounts\n   - Signed by complainant\n\n2. **List of Dates and Events**\n   - Chronological list of all events from order placement to present\n   - Date-wise format\n\n3. **Memo of Parties**\n   - Full names, addresses of all parties\n   - Registered office address for companies\n\n4. **Affidavit**\n   - Verification of facts stated in the complaint\n   - Sworn statement that facts are true\n\n5. **Index of Documents**\n   - Numbered list of all supporting documents attached\n\n6. **Supporting Documents**\n   - Invoice/receipt\n   - Product photos showing defect\n   - Screenshots of communication with company\n   - Email correspondence\n   - NCH complaint copy (if filed)\n   - Any other relevant evidence\n\n**Filing Steps on e-Jagriti:**\n1. Visit https://e-jagriti.gov.in/\n2. Register as a new user or login\n3. Select appropriate Commission (District/State/National based on claim amount)\n4. Fill the online complaint form\n5. Upload all required documents\n6. Pay court fee (if applicable — no fee for claims up to ₹5 lakh)\n7. Submit and receive Case Number\n\n**Jurisdiction (Claim Amount):**\n- District Commission: Up to ₹1 crore\n- State Commission: ₹1 crore to ₹10 crore\n- National Commission: Above ₹10 crore\n\n**Filing can be done from:**\n- Where the complainant resides or works\n- Where the opposite party resides or has a branch\n- Where the cause of action arose",
+      "tags": ["e-jagriti", "consumer_commission", "filing", "legal", "complaint"]
+    },
+    {
+      "id": "AMAZON_GRIEVANCE",
+      "title": "Amazon India — Grievance Escalation Contacts & SLA",
+      "category": "platform",
+      "platform": "Amazon",
+      "verification_date": "2026-10-25",
+      "source_url": "https://www.amazon.in/gp/help/customer/display.html?nodeId=200507590",
+      "content": "**Amazon India Grievance Escalation Path:**\n\n**Level 1: Customer Support**\n- Phone: 1800-3000-9009 (toll-free)\n- Chat: Available via Amazon app and website\n- Email: Through 'Contact Us' on order page\n- SLA: First response within 24-48 hours\n\n**Level 2: Grievance Officer**\n- Name: As per current listing on Amazon Help pages\n- Email: grievance-officer@amazon.in\n- Address: Amazon Seller Services Pvt. Ltd., Brigade Gateway, 8th Floor, 26/1 Dr. Rajkumar Road, Malleswaram-Rajajinagar, Bengaluru - 560055\n- SLA: Acknowledge within 48 hours, resolve within 1 month (per E-Commerce Rules 2020)\n\n**Level 3: Nodal Officer (Appellate)**\n- For unresolved grievances after Level 2\n- Contact via Amazon Legal page\n- SLA: 30 days from receipt of complaint\n\n**Amazon Return/Refund Policy Key Points:**\n- Most items: 7-30 day return window depending on category\n- Electronics: 7-10 day return window\n- Refund timeline: 5-7 business days after return pickup\n- For non-delivery: Investigation period up to 2-3 weeks\n- A-to-z Guarantee: Can be invoked if seller/Amazon doesn't resolve\n\n**Key Email Templates:**\n- Subject format: 'Formal Grievance — Order [ORDER_ID] — [Issue Category]'\n- Include: Order ID, date of purchase, issue description, previous complaint references, and specific relief sought",
+      "tags": ["amazon", "grievance_officer", "escalation", "return_policy", "refund"]
+    },
+    {
+      "id": "FLIPKART_GRIEVANCE",
+      "title": "Flipkart — Grievance Escalation Contacts & SLA",
+      "category": "platform",
+      "platform": "Flipkart",
+      "verification_date": "2026-10-25",
+      "source_url": "https://www.flipkart.com/helpcentre",
+      "content": "**Flipkart Grievance Escalation Path:**\n\n**Level 1: Customer Support**\n- Phone: 1800-202-9898 (toll-free)\n- Chat: Via Flipkart app\n- Email: cs@flipkart.com (via Help Centre)\n- SLA: First response within 24-48 hours\n\n**Level 2: Grievance Officer**\n- Email: grievance.officer@flipkart.com\n- Address: Flipkart Internet Pvt. Ltd., Buildings Alyssa, Begonia & Clove Embassy Tech Village, Outer Ring Road, Devarabeesanahalli Village, Bengaluru - 560103\n- SLA: Acknowledge within 48 hours, resolve within 1 month\n\n**Flipkart Return/Refund Policy Key Points:**\n- Electronics: 7-day replacement guarantee\n- Fashion: 10-30 day return window\n- Books & Media: 10-day return\n- Refund: 5-7 business days after return accepted\n- Flipkart Assured: Enhanced delivery and return guarantees\n\n**Important Notes:**\n- Flipkart often offers Flipkart Credits as resolution — consumers can insist on original payment method refund\n- For seller disputes, Flipkart acts as marketplace facilitator and has obligation under E-Commerce Rules\n- If grievance officer doesn't resolve in 30 days, proceed to NCH/Consumer Commission",
+      "tags": ["flipkart", "grievance_officer", "escalation", "return_policy", "refund"]
+    },
+    {
+      "id": "ZEPTO_GRIEVANCE",
+      "title": "Zepto — Grievance Escalation Contacts & SLA",
+      "category": "platform",
+      "platform": "Zepto",
+      "verification_date": "2026-10-25",
+      "source_url": "https://www.zeptonow.com/terms",
+      "content": "**Zepto Grievance Escalation Path:**\n\n**Level 1: In-App Support**\n- Chat: Via Zepto app (Help & Support section)\n- Email: support@zeptonow.com\n- SLA: Response within 24-48 hours\n\n**Level 2: Grievance Officer**\n- Email: grievance@zeptonow.com\n- Address: KiranaKart Technologies Pvt. Ltd. (Zepto), Mumbai, Maharashtra\n- SLA: Acknowledge within 48 hours, resolve within 1 month\n\n**Quick-Commerce Specific Issues:**\n- 10-minute delivery promise — quality control challenges\n- Expired/near-expiry food items common complaint\n- FSSAI license verification: All food sellers must have valid FSSAI license\n- Selling expired food is punishable under Food Safety and Standards Act, 2006\n\n**FSSAI Complaint (for expired food):**\n- Online: https://foscos.fssai.gov.in/\n- Toll-free: 1800-112-100\n- Report expired food items to local Food Safety Officer\n\n**Zepto Refund Policy:**\n- Refund for missing/wrong items: Immediate credit or refund\n- Expired items: Should be full refund + compensation\n- Typically processes refunds within 3-5 business days",
+      "tags": ["zepto", "quick_commerce", "grievance_officer", "fssai", "expired_food"]
+    },
+    {
+      "id": "BLINKIT_GRIEVANCE",
+      "title": "Blinkit — Grievance Escalation Contacts & SLA",
+      "category": "platform",
+      "platform": "Blinkit",
+      "verification_date": "2026-10-25",
+      "source_url": "https://blinkit.com/terms",
+      "content": "**Blinkit Grievance Escalation Path:**\n\n**Level 1: In-App Support**\n- Chat: Via Blinkit app\n- Email: support@blinkit.com\n- SLA: Response within 24-48 hours\n\n**Level 2: Grievance Officer**\n- Email: grievance@blinkit.com\n- Address: Blinkit (Zomato subsidiary), Locodel Solutions Pvt. Ltd., Gurugram, Haryana\n- SLA: Acknowledge within 48 hours, resolve within 1 month\n\n**Note:** Blinkit is a subsidiary of Zomato Ltd. For escalation beyond Blinkit, Zomato's corporate grievance framework may also apply.\n\n**Common Blinkit Issues:**\n- Wrong order delivery (orders mixed up between customers)\n- Missing items from order\n- Expired/poor quality food items\n- Price discrepancies (app price vs MRP)\n\n**Legal Metrology Act (for MRP violations):**\n- No item can be sold above MRP under the Legal Metrology Act, 2009\n- 'Convenience fee' or 'platform fee' is separate from product MRP\n- If product price on app exceeds printed MRP, it's a violation\n- Report to local Legal Metrology Department or consumer forum\n\n**Refund Policy:**\n- Missing/wrong items: Credit or refund within 2-3 business days\n- Quality issues: Refund upon complaint with photo evidence",
+      "tags": ["blinkit", "quick_commerce", "grievance_officer", "zomato", "mrp"]
+    },
+    {
+      "id": "SWIGGY_INSTAMART_GRIEVANCE",
+      "title": "Swiggy Instamart — Grievance Escalation Contacts & SLA",
+      "category": "platform",
+      "platform": "Swiggy Instamart",
+      "verification_date": "2026-10-25",
+      "source_url": "https://www.swiggy.com/terms-and-conditions",
+      "content": "**Swiggy Instamart Grievance Escalation Path:**\n\n**Level 1: In-App Support**\n- Chat: Via Swiggy app (Help section)\n- Email: support@swiggy.in\n- SLA: Response within 24-48 hours\n\n**Level 2: Grievance Officer**\n- Email: grievances@swiggy.in\n- Address: Bundl Technologies Pvt. Ltd. (Swiggy), Bengaluru, Karnataka\n- SLA: Acknowledge within 48 hours, resolve within 1 month\n\n**Swiggy Instamart Specific Issues:**\n- Defective non-food items (electronics, household items)\n- Wrong quantity delivered\n- Cancelled order refund delays\n- Quality issues with perishable items\n\n**Refund Policy:**\n- Cancelled before dispatch: Full refund in 5-7 business days\n- Wrong/missing items: Immediate credit or refund\n- Defective items: Full refund upon verification\n- Swiggy often offers Swiggy Money (wallet credits) — consumers can insist on bank refund\n\n**Important Note on Swiggy Money/Credits:**\n- Consumers are NOT obligated to accept wallet credits\n- Under Consumer Protection Act, refund should be to original payment method\n- If Swiggy insists on wallet credits for a legitimate complaint, this can be escalated",
+      "tags": ["swiggy", "instamart", "quick_commerce", "grievance_officer", "refund"]
+    },
+    {
+      "id": "EVIDENCE_CHECKLIST",
+      "title": "Evidence Requirements by Complaint Category",
+      "category": "procedure",
+      "verification_date": "2026-10-20",
+      "source_url": "internal",
+      "content": "**Required Evidence Checklist by Complaint Category:**\n\n**Non-Delivery:**\n- Order confirmation/invoice (Required)\n- Delivery tracking screenshots (Required)\n- Communication with platform support (Required)\n- Payment proof (bank/UPI statement) (Recommended)\n- Address proof (if delivery address disputed) (Optional)\n\n**Damaged/Defective Item:**\n- Order confirmation/invoice (Required)\n- Photos/video of damaged/defective product (Required)\n- Unboxing video if available (Recommended)\n- Communication with platform support (Required)\n- Return request status/rejection screenshot (if applicable) (Required)\n\n**Wrong/Missing Item:**\n- Order confirmation showing ordered items (Required)\n- Photo of received items (Required)\n- Communication with platform support (Required)\n- Payment proof (Recommended)\n\n**Refund Delayed/Denied:**\n- Order confirmation/invoice (Required)\n- Cancellation/return confirmation (Required)\n- Refund promise communication (Required)\n- Bank statement showing no refund received (Required)\n- Follow-up communication screenshots (Recommended)\n\n**Hidden Charges/Overbilling:**\n- Order confirmation showing listed price (Required)\n- Payment receipt showing charged amount (Required)\n- Invoice showing hidden charges breakdown (Required)\n- Product page screenshot showing advertised price (Recommended)\n- For MRP violations: Photo of product with printed MRP (Required)\n\n**Expired Food/Quick-Commerce Issue:**\n- Order confirmation (Required)\n- Photo of expired product with expiry date visible (Required)\n- Photo showing delivery date vs expiry date discrepancy (Required)\n- Communication with platform (Required)\n- Medical bills if health affected (if applicable) (Required)\n- FSSAI license check of seller (Recommended)",
+      "tags": ["evidence", "checklist", "documentation", "proof"]
+    },
+    {
+      "id": "LEGAL_METROLOGY",
+      "title": "Legal Metrology Act, 2009 — MRP Provisions",
+      "category": "legislation",
+      "verification_date": "2026-10-15",
+      "source_url": "https://consumeraffairs.nic.in/acts-and-rules/legal-metrology",
+      "content": "**Legal Metrology Act, 2009 — Key Provisions on MRP:**\n\nSection 18 (Declarations on Pre-Packaged Commodities): Every pre-packaged commodity must bear on the label:\n- Name and address of manufacturer/packer\n- Net quantity\n- Month and year of manufacture/packing\n- Retail sale price (MRP) inclusive of all taxes\n- Consumer care details\n\n**MRP = Maximum Retail Price:** No retailer, whether offline or online, can sell any pre-packaged commodity above the MRP printed on the package.\n\n**Penalties for violation:**\n- First offence: Fine up to ₹25,000\n- Second offence: Fine up to ₹50,000\n- Subsequent offences: Fine up to ₹1,00,000 or imprisonment up to 1 year or both\n\n**Online Platform Applicability:**\n- E-commerce platforms that list products above MRP are in violation\n- 'Convenience charges' or 'delivery charges' are separate from product price — these cannot push individual product price above MRP\n- Platform charges (like delivery fee) are legitimate only if separately itemized and disclosed before purchase\n\n**Where to Complain:**\n- Local Controller of Legal Metrology in the respective state\n- Consumer helpline 1915\n- District Consumer Forum",
+      "tags": ["mrp", "legal_metrology", "price", "overbilling", "penalty"]
+    },
+    {
+      "id": "FSSAI_REGULATIONS",
+      "title": "FSSAI — Food Safety Regulations for Quick Commerce",
+      "category": "legislation",
+      "verification_date": "2026-10-15",
+      "source_url": "https://fssai.gov.in/",
+      "content": "**Food Safety and Standards Act, 2006 — Expired Food Provisions:**\n\n**Section 26**: No person shall sell or distribute any food which is unsafe or substandard.\n\n**Section 27**: No food article shall be sold after the date of expiry.\n\n**Penalties (Section 59):**\n- Selling unsafe/substandard food: Fine up to ₹5,00,000\n- If injury caused: Imprisonment up to 6 months and fine up to ₹1,00,000\n- If serious injury: Imprisonment up to 1 year and fine up to ₹3,00,000\n- If death caused: Imprisonment up to 7 years and fine up to ₹10,00,000\n\n**Quick Commerce Obligations:**\n- Every food business operator (including online platforms) must have a valid FSSAI license\n- Proper cold chain maintenance for perishable items\n- First-in-first-out (FIFO) inventory management\n- Regular quality checks on expiry dates before dispatch\n\n**How to File FSSAI Complaint:**\n1. Online: https://foscos.fssai.gov.in/\n2. Call: 1800-112-100 (toll-free)\n3. Report to local Food Safety Officer\n4. Include: Photos of expired products, order details, delivery date proof\n\n**FSSAI License Check:**\n- Verify seller's FSSAI license at https://foscos.fssai.gov.in/\n- License number should be displayed on the app/website",
+      "tags": ["fssai", "food_safety", "expired_food", "quick_commerce", "penalty"]
+    }
+  ]
+}

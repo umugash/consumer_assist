@@ -1,0 +1,341 @@
+{
+  "complaints": [
+    {
+      "id": "SYNTH-001",
+      "platform": "Amazon",
+      "issue_category": "Non-Delivery",
+      "order_id": "402-8834521-7789234",
+      "amount": 2499.0,
+      "incident_date": "2026-10-25",
+      "customer_support_contacted": true,
+      "resolution_sought": "Full refund",
+      "description": "I ordered a Samsung power bank on October 25th from Amazon for ₹2,499. The expected delivery was October 28th, but it still hasn't arrived. I contacted Amazon support on November 1st and they said they'd look into it but gave no resolution. The tracking shows 'Out for delivery' since October 28th but nothing was delivered.",
+      "dialogue": [
+        {"role": "user", "message": "Hi, I need help with an Amazon order that was never delivered."},
+        {"role": "assistant", "message": "I'm sorry to hear about your delivery issue. I'll help you file a structured complaint. Could you please share your Amazon order ID?"},
+        {"role": "user", "message": "Yes, it's 402-8834521-7789234. I ordered a Samsung power bank for ₹2,499 on October 25th."},
+        {"role": "assistant", "message": "Thank you. I've noted your order ID 402-8834521-7789234 for a Samsung power bank worth ₹2,499 ordered on October 25th. When was the expected delivery date, and have you contacted Amazon customer support about this?"},
+        {"role": "user", "message": "Expected delivery was October 28th. Yes, I called their support on November 1st but they just said they'll investigate. No refund, no replacement offered."},
+        {"role": "assistant", "message": "I understand. So the order was placed on Oct 25, expected delivery Oct 28, and you contacted support on Nov 1 with no resolution. What resolution would you like — a full refund, replacement, or both?"},
+        {"role": "user", "message": "I want a full refund. It's been over 2 weeks now."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Amazon"},
+        {"type": "ORDER_ID", "value": "402-8834521-7789234"},
+        {"type": "AMOUNT", "value": "2499.0", "currency": "INR"},
+        {"type": "DATE", "value": "October 25th", "normalized": "2026-10-25"},
+        {"type": "DATE", "value": "October 28th", "normalized": "2026-10-28"},
+        {"type": "DATE", "value": "November 1st", "normalized": "2026-11-01"},
+        {"type": "PRODUCT", "value": "Samsung power bank"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-10-25", "event": "Order placed on Amazon"},
+        {"date": "2026-10-28", "event": "Expected delivery date (not delivered)"},
+        {"date": "2026-11-01", "event": "Contacted Amazon customer support"},
+        {"date": "2026-11-01", "event": "Amazon acknowledged but no resolution"}
+      ]
+    },
+    {
+      "id": "SYNTH-002",
+      "platform": "Flipkart",
+      "issue_category": "Damaged/Defective Item",
+      "order_id": "OD432876512349876",
+      "amount": 15999.0,
+      "incident_date": "2026-11-02",
+      "customer_support_contacted": true,
+      "resolution_sought": "Replacement or full refund",
+      "description": "Received a JBL Charge 5 Bluetooth speaker from Flipkart on November 2nd. The speaker has a visible crack on the body and produces distorted sound. Flipkart rejected my return request saying the return window has expired, even though I raised it within 3 days of delivery.",
+      "dialogue": [
+        {"role": "user", "message": "I got a damaged JBL speaker from Flipkart and they're refusing to take it back."},
+        {"role": "assistant", "message": "I'm sorry about the damaged product. Let me help you document this complaint. What's your Flipkart order ID and when did you receive the item?"},
+        {"role": "user", "message": "Order ID is OD432876512349876. I received it on November 2nd. It cost ₹15,999. The speaker body is cracked and the sound is distorted."},
+        {"role": "assistant", "message": "Thank you. I see a JBL speaker worth ₹15,999, order OD432876512349876, received Nov 2nd with physical damage (cracked body) and functional issues (distorted sound). When did you contact Flipkart about this?"},
+        {"role": "user", "message": "I raised a return request on November 5th, within 3 days. But they rejected it saying the return window expired. That's not right — they show 7-day return policy for electronics."},
+        {"role": "assistant", "message": "You're correct that Flipkart's stated return policy for electronics is typically 7 days. Rejecting within 3 days seems incorrect. Do you have screenshots of the return rejection and the product damage? Would you like a replacement or a full refund?"},
+        {"role": "user", "message": "I want either a replacement or full refund. Yes, I have photos of the cracked speaker and screenshots of the rejection."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Flipkart"},
+        {"type": "ORDER_ID", "value": "OD432876512349876"},
+        {"type": "AMOUNT", "value": "15999.0", "currency": "INR"},
+        {"type": "DATE", "value": "November 2nd", "normalized": "2026-11-02"},
+        {"type": "DATE", "value": "November 5th", "normalized": "2026-11-05"},
+        {"type": "PRODUCT", "value": "JBL Charge 5 Bluetooth speaker"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-11-02", "event": "Received damaged JBL speaker from Flipkart"},
+        {"date": "2026-11-05", "event": "Return request raised on Flipkart"},
+        {"date": "2026-11-05", "event": "Return request rejected by Flipkart"}
+      ]
+    },
+    {
+      "id": "SYNTH-003",
+      "platform": "Zepto",
+      "issue_category": "Expired Food/Quick-Commerce Issue",
+      "order_id": "ZPT-20261108-44821",
+      "amount": 346.0,
+      "incident_date": "2026-11-08",
+      "customer_support_contacted": true,
+      "resolution_sought": "Full refund and compensation",
+      "description": "Ordered groceries from Zepto on November 8th including a pack of Amul paneer and Mother Dairy milk. Both items were expired — the paneer had a use-by date of November 3rd and the milk was dated November 6th. My child consumed some of the milk before we noticed. Total order was ₹346.",
+      "dialogue": [
+        {"role": "user", "message": "Zepto delivered expired food items to my house. My child drank expired milk before we realized it."},
+        {"role": "assistant", "message": "That's a serious health and safety concern. I'll help you document this thoroughly. Please tell me your Zepto order ID, what items were expired, and when you received the delivery."},
+        {"role": "user", "message": "Order ID ZPT-20261108-44821, delivered on November 8th. The Amul paneer had expired on November 3rd and the Mother Dairy milk was expired since November 6th. The total order was ₹346."},
+        {"role": "assistant", "message": "This is concerning — both items were past their expiry date at the time of delivery on Nov 8th. The paneer was 5 days expired and the milk was 2 days expired. You mentioned your child consumed some milk. Did you contact Zepto support about this?"},
+        {"role": "user", "message": "Yes, I contacted them on the same day through their app. They offered ₹50 Zepto credit which is insulting when my child's health was at risk. I want a full refund and proper compensation."},
+        {"role": "assistant", "message": "A ₹50 credit for delivering expired food that a child consumed is clearly inadequate. Under the Consumer Protection Act, 2019 and FSSAI regulations, selling expired food is a serious violation. Do you have photos of the expired products showing the expiry dates?"},
+        {"role": "user", "message": "Yes, I took photos of both products with their expiry dates visible."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Zepto"},
+        {"type": "ORDER_ID", "value": "ZPT-20261108-44821"},
+        {"type": "AMOUNT", "value": "346.0", "currency": "INR"},
+        {"type": "DATE", "value": "November 8th", "normalized": "2026-11-08"},
+        {"type": "DATE", "value": "November 3rd", "normalized": "2026-11-03"},
+        {"type": "DATE", "value": "November 6th", "normalized": "2026-11-06"},
+        {"type": "PRODUCT", "value": "Amul paneer"},
+        {"type": "PRODUCT", "value": "Mother Dairy milk"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-11-08", "event": "Groceries delivered by Zepto"},
+        {"date": "2026-11-08", "event": "Discovered expired items"},
+        {"date": "2026-11-08", "event": "Contacted Zepto support via app"},
+        {"date": "2026-11-08", "event": "Zepto offered inadequate ₹50 credit"}
+      ]
+    },
+    {
+      "id": "SYNTH-004",
+      "platform": "Blinkit",
+      "issue_category": "Wrong/Missing Item",
+      "order_id": "BLINK-2026110522187",
+      "amount": 879.0,
+      "incident_date": "2026-11-05",
+      "customer_support_contacted": true,
+      "resolution_sought": "Delivery of correct items or full refund",
+      "description": "Ordered household essentials from Blinkit worth ₹879 on November 5th. Received someone else's order — completely different items. The order contained baby products instead of my cleaning supplies and snacks. Blinkit support said they can't do anything once delivered.",
+      "dialogue": [
+        {"role": "user", "message": "Blinkit sent me completely wrong items. I got someone else's order."},
+        {"role": "assistant", "message": "That's frustrating. Let me help you escalate this properly. Could you share your Blinkit order ID, what you ordered versus what you received, and the order amount?"},
+        {"role": "user", "message": "Order BLINK-2026110522187, placed on November 5th for ₹879. I ordered cleaning supplies and snacks but received baby diapers and formula — clearly someone else's order."},
+        {"role": "assistant", "message": "That's a clear case of wrong order delivery. Order BLINK-2026110522187 worth ₹879 placed Nov 5th — you received an entirely different customer's order. Have you contacted Blinkit support about this?"},
+        {"role": "user", "message": "Yes, their chat support said since the order shows 'delivered' they can't process a return or refund. That's ridiculous."},
+        {"role": "assistant", "message": "Their response is unreasonable. The order was delivered, but with entirely wrong items — that's not a valid delivery of your order. Would you prefer receiving your correct items or a full refund?"},
+        {"role": "user", "message": "At this point I just want my money back. I already bought the stuff I needed from another store."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Blinkit"},
+        {"type": "ORDER_ID", "value": "BLINK-2026110522187"},
+        {"type": "AMOUNT", "value": "879.0", "currency": "INR"},
+        {"type": "DATE", "value": "November 5th", "normalized": "2026-11-05"},
+        {"type": "PRODUCT", "value": "cleaning supplies"},
+        {"type": "PRODUCT", "value": "snacks"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-11-05", "event": "Order placed on Blinkit"},
+        {"date": "2026-11-05", "event": "Received wrong items (someone else's order)"},
+        {"date": "2026-11-05", "event": "Contacted Blinkit support — refused resolution"}
+      ]
+    },
+    {
+      "id": "SYNTH-005",
+      "platform": "Swiggy Instamart",
+      "issue_category": "Refund Delayed/Denied",
+      "order_id": "SWG-IM-78432156",
+      "amount": 1247.0,
+      "incident_date": "2026-10-20",
+      "customer_support_contacted": true,
+      "resolution_sought": "Immediate refund to original payment method",
+      "description": "Cancelled a Swiggy Instamart order SWG-IM-78432156 worth ₹1,247 on October 20th before it was dispatched. Swiggy confirmed cancellation and promised refund within 5-7 business days. It's been over 3 weeks and no refund received. Multiple follow-ups yielded only automated responses.",
+      "dialogue": [
+        {"role": "user", "message": "Swiggy Instamart hasn't refunded my cancelled order even after 3 weeks."},
+        {"role": "assistant", "message": "A 3-week delay on a refund for a cancelled order is excessive. Let me document this. What's your Swiggy Instamart order ID, the amount, and when did you cancel?"},
+        {"role": "user", "message": "Order SWG-IM-78432156, ₹1,247, cancelled on October 20th. They said 5-7 business days for refund. Nothing yet."},
+        {"role": "assistant", "message": "Order SWG-IM-78432156 for ₹1,247, cancelled October 20th with a promised 5-7 business day refund. That window passed weeks ago. How have you followed up with Swiggy?"},
+        {"role": "user", "message": "I've emailed them 3 times and used their in-app chat twice. All I get are automated 'we're looking into it' responses. No actual human response."},
+        {"role": "assistant", "message": "Multiple follow-ups with only automated responses is unacceptable. Under consumer protection rules, they're obligated to process refunds within the stated timeline. Do you have screenshots of the cancellation confirmation and the refund promise?"},
+        {"role": "user", "message": "Yes, I have the cancellation email from Swiggy showing the refund promise. I want my refund back to my bank account immediately."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Swiggy Instamart"},
+        {"type": "ORDER_ID", "value": "SWG-IM-78432156"},
+        {"type": "AMOUNT", "value": "1247.0", "currency": "INR"},
+        {"type": "DATE", "value": "October 20th", "normalized": "2026-10-20"},
+        {"type": "PRODUCT", "value": "groceries"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-10-20", "event": "Order cancelled on Swiggy Instamart"},
+        {"date": "2026-10-20", "event": "Cancellation confirmed, refund promised in 5-7 days"},
+        {"date": "2026-10-29", "event": "Refund timeline expired (7 business days)"},
+        {"date": "2026-11-10", "event": "Still no refund after 3 weeks and multiple follow-ups"}
+      ]
+    },
+    {
+      "id": "SYNTH-006",
+      "platform": "Amazon",
+      "issue_category": "Hidden Charges/Overbilling",
+      "order_id": "408-1234567-8901234",
+      "amount": 4299.0,
+      "incident_date": "2026-11-01",
+      "customer_support_contacted": true,
+      "resolution_sought": "Refund of overcharged amount ₹700",
+      "description": "Purchased a Boat Airdopes 441 from Amazon listed at ₹3,599. At checkout, the price shown was ₹3,599 but my credit card was charged ₹4,299 — an extra ₹700. The invoice shows a 'handling fee' of ₹700 that was never disclosed on the product page or during checkout. Amazon support says the charge is valid but can't explain what the handling fee covers.",
+      "dialogue": [
+        {"role": "user", "message": "Amazon charged me ₹700 extra on my order without showing it during checkout. This is hidden charges."},
+        {"role": "assistant", "message": "Hidden charges are a serious consumer rights issue. Could you share the order ID, the advertised price versus what you were charged, and what the extra charge was labeled as?"},
+        {"role": "user", "message": "Order 408-1234567-8901234, Boat Airdopes 441. Listed price ₹3,599 but charged ₹4,299. Invoice shows ₹700 'handling fee' that was never shown on the product page or at checkout."},
+        {"role": "assistant", "message": "So there's a ₹700 undisclosed 'handling fee' — the product was listed at ₹3,599 but you were charged ₹4,299. This appears to violate the E-Commerce Rules 2020 which require all charges to be disclosed before purchase. Have you contacted Amazon about this discrepancy?"},
+        {"role": "user", "message": "Yes, they just said the handling fee is valid. When I asked what it covers, they couldn't explain. I want the ₹700 refunded."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Amazon"},
+        {"type": "ORDER_ID", "value": "408-1234567-8901234"},
+        {"type": "AMOUNT", "value": "4299.0", "currency": "INR"},
+        {"type": "AMOUNT", "value": "3599.0", "currency": "INR"},
+        {"type": "AMOUNT", "value": "700.0", "currency": "INR"},
+        {"type": "DATE", "value": "November 1st", "normalized": "2026-11-01"},
+        {"type": "PRODUCT", "value": "Boat Airdopes 441"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-11-01", "event": "Purchased Boat Airdopes on Amazon at listed ₹3,599"},
+        {"date": "2026-11-01", "event": "Charged ₹4,299 — ₹700 undisclosed handling fee"},
+        {"date": "2026-11-01", "event": "Contacted Amazon; told charge is valid, no explanation"}
+      ]
+    },
+    {
+      "id": "SYNTH-007",
+      "platform": "Flipkart",
+      "issue_category": "Non-Delivery",
+      "order_id": "OD112233445566778",
+      "amount": 32999.0,
+      "incident_date": "2026-10-15",
+      "customer_support_contacted": true,
+      "resolution_sought": "Full refund",
+      "description": "Ordered a OnePlus Nord CE 4 smartphone from Flipkart during their Big Billion Days sale for ₹32,999 on October 15th. Tracking shows 'Delivered' on October 18th but I never received the package. Flipkart says their records show delivery and refuses refund. I live in a gated society with CCTV — no delivery person was seen at my door.",
+      "dialogue": [
+        {"role": "user", "message": "Flipkart marked my ₹32,999 phone order as delivered but I never received it. They refuse to refund."},
+        {"role": "assistant", "message": "A false delivery claim for such a high-value item is very serious. Let me help you build a strong case. What's the order ID and what evidence do you have?"},
+        {"role": "user", "message": "Order OD112233445566778, OnePlus Nord CE 4 for ₹32,999 ordered Oct 15th. Shows delivered Oct 18th but I was home all day. My society has CCTV and no delivery person came."},
+        {"role": "assistant", "message": "Having CCTV evidence is very strong for your case. This could be a case of delivery fraud. Have you filed a complaint with Flipkart's grievance officer specifically, not just regular support?"},
+        {"role": "user", "message": "I spoke to their regular support 3 times. They keep saying it shows delivered. How do I reach the grievance officer?"}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Flipkart"},
+        {"type": "ORDER_ID", "value": "OD112233445566778"},
+        {"type": "AMOUNT", "value": "32999.0", "currency": "INR"},
+        {"type": "DATE", "value": "October 15th", "normalized": "2026-10-15"},
+        {"type": "DATE", "value": "October 18th", "normalized": "2026-10-18"},
+        {"type": "PRODUCT", "value": "OnePlus Nord CE 4"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-10-15", "event": "Ordered OnePlus Nord CE 4 on Flipkart"},
+        {"date": "2026-10-18", "event": "Order marked as delivered (not actually received)"},
+        {"date": "2026-10-18", "event": "Contacted Flipkart support — told delivery confirmed"}
+      ]
+    },
+    {
+      "id": "SYNTH-008",
+      "platform": "Zepto",
+      "issue_category": "Hidden Charges/Overbilling",
+      "order_id": "ZPT-20261107-33254",
+      "amount": 523.0,
+      "incident_date": "2026-11-07",
+      "customer_support_contacted": false,
+      "resolution_sought": "Refund of excess charges",
+      "description": "Multiple items on my Zepto order were charged at higher MRP than what was printed on the actual product packaging. For example, Maggi was listed at ₹42 on Zepto but the MRP printed on the packet is ₹28. Three such items totaling about ₹95 in overcharges. Order total was ₹523.",
+      "dialogue": [
+        {"role": "user", "message": "Zepto is charging more than MRP on several items. The prices on their app are higher than what's printed on the product packaging."},
+        {"role": "assistant", "message": "Charging above MRP is illegal under the Legal Metrology Act. This is a serious violation. Could you share your Zepto order details and which items were overpriced?"},
+        {"role": "user", "message": "Order ZPT-20261107-33254 from November 7th, total ₹523. Maggi was ₹42 on app but MRP is ₹28, Parle-G was ₹30 on app but MRP is ₹10, and Vim bar was ₹45 on app but MRP is ₹22."},
+        {"role": "assistant", "message": "That's a total overcharge of about ₹57 (₹14+₹20+₹23) above MRP. Under the Legal Metrology Act, 2009, no retailer — including online platforms — can sell any product above its printed MRP. Do you have photos of the products showing the MRP on packaging?"},
+        {"role": "user", "message": "Yes, I took photos comparing the Zepto app prices with the MRP on each product."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Zepto"},
+        {"type": "ORDER_ID", "value": "ZPT-20261107-33254"},
+        {"type": "AMOUNT", "value": "523.0", "currency": "INR"},
+        {"type": "DATE", "value": "November 7th", "normalized": "2026-11-07"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-11-07", "event": "Order placed on Zepto"},
+        {"date": "2026-11-07", "event": "Received items with MRP lower than app price"},
+        {"date": "2026-11-07", "event": "Documented overcharges with photos"}
+      ]
+    },
+    {
+      "id": "SYNTH-009",
+      "platform": "Swiggy Instamart",
+      "issue_category": "Damaged/Defective Item",
+      "order_id": "SWG-IM-92145678",
+      "amount": 2199.0,
+      "incident_date": "2026-11-09",
+      "customer_support_contacted": true,
+      "resolution_sought": "Full refund",
+      "description": "Ordered a Prestige electric kettle from Swiggy Instamart for ₹2,199. The kettle arrived with a broken lid hinge and the heating element doesn't work — water doesn't heat at all. Swiggy offered a ₹200 coupon as resolution which is unacceptable for a completely non-functional product.",
+      "dialogue": [
+        {"role": "user", "message": "The electric kettle I ordered from Swiggy Instamart is completely non-functional. Broken lid and heating element doesn't work."},
+        {"role": "assistant", "message": "Receiving a non-functional product is clearly defective goods. Let me help you escalate. What's your order ID, the product, and how much did you pay?"},
+        {"role": "user", "message": "Order SWG-IM-92145678, Prestige electric kettle, ₹2,199, delivered November 9th. The lid hinge is broken and it doesn't heat water at all."},
+        {"role": "assistant", "message": "A brand new Prestige kettle for ₹2,199 that doesn't heat water and has a broken lid is clearly defective. Have you contacted Swiggy Instamart support?"},
+        {"role": "user", "message": "Yes, they offered a ₹200 coupon. For a ₹2,199 product that doesn't work at all! I want a full refund."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Swiggy Instamart"},
+        {"type": "ORDER_ID", "value": "SWG-IM-92145678"},
+        {"type": "AMOUNT", "value": "2199.0", "currency": "INR"},
+        {"type": "DATE", "value": "November 9th", "normalized": "2026-11-09"},
+        {"type": "PRODUCT", "value": "Prestige electric kettle"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-11-09", "event": "Received defective Prestige kettle from Swiggy Instamart"},
+        {"date": "2026-11-09", "event": "Contacted Swiggy — offered ₹200 coupon only"}
+      ]
+    },
+    {
+      "id": "SYNTH-010",
+      "platform": "Blinkit",
+      "issue_category": "Expired Food/Quick-Commerce Issue",
+      "order_id": "BLINK-2026110988432",
+      "amount": 198.0,
+      "incident_date": "2026-11-09",
+      "customer_support_contacted": true,
+      "resolution_sought": "Full refund and report to FSSAI",
+      "description": "Blinkit delivered a pack of bread and a bottle of flavored yogurt. The bread had visible mold and the yogurt expired 4 days ago. This is a repeated pattern — third time receiving near-expired or expired items from Blinkit.",
+      "dialogue": [
+        {"role": "user", "message": "This is the THIRD time Blinkit has sent me expired food. Today the bread was moldy and yogurt was expired."},
+        {"role": "assistant", "message": "A repeated pattern of expired food delivery is very concerning and suggests systemic issues with their quality control. Let me document this complaint. What are the order details?"},
+        {"role": "user", "message": "Order BLINK-2026110988432, November 9th, ₹198. Moldy bread and yogurt expired 4 days ago. I have photos and this is the third such incident in 2 months."},
+        {"role": "assistant", "message": "Three incidents in 2 months constitutes a pattern. This may warrant an FSSAI complaint beyond just a consumer grievance. Have you reported the previous incidents as well?"},
+        {"role": "user", "message": "I complained through the app both previous times. They gave me credit both times but clearly nothing changed. I want a refund and I want to report this to FSSAI."}
+      ],
+      "expected_entities": [
+        {"type": "PLATFORM", "value": "Blinkit"},
+        {"type": "ORDER_ID", "value": "BLINK-2026110988432"},
+        {"type": "AMOUNT", "value": "198.0", "currency": "INR"},
+        {"type": "DATE", "value": "November 9th", "normalized": "2026-11-09"}
+      ],
+      "expected_timeline": [
+        {"date": "2026-11-09", "event": "Received expired food from Blinkit (3rd incident)"},
+        {"date": "2026-11-09", "event": "Complained via Blinkit app"}
+      ]
+    }
+  ],
+  "evaluation_ground_truth": {
+    "complaint_categories": ["Non-Delivery", "Damaged/Defective Item", "Wrong/Missing Item", "Refund Delayed/Denied", "Hidden Charges/Overbilling", "Expired Food/Quick-Commerce Issue"],
+    "platforms": ["Amazon", "Flipkart", "Zepto", "Blinkit", "Swiggy Instamart"],
+    "total_complaints": 10,
+    "entity_types": ["PLATFORM", "ORDER_ID", "AMOUNT", "DATE", "PRODUCT"],
+    "expected_intents_per_complaint": {
+      "SYNTH-001": "Non-Delivery",
+      "SYNTH-002": "Damaged/Defective Item",
+      "SYNTH-003": "Expired Food/Quick-Commerce Issue",
+      "SYNTH-004": "Wrong/Missing Item",
+      "SYNTH-005": "Refund Delayed/Denied",
+      "SYNTH-006": "Hidden Charges/Overbilling",
+      "SYNTH-007": "Non-Delivery",
+      "SYNTH-008": "Hidden Charges/Overbilling",
+      "SYNTH-009": "Damaged/Defective Item",
+      "SYNTH-010": "Expired Food/Quick-Commerce Issue"
+    }
+  }
+}
