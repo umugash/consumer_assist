@@ -247,7 +247,7 @@ def _call_openai_chat(
     api_key: str,
 ) -> Optional[Dict[str, Any]]:
     import openai
-    client = openai.OpenAI(api_key=api_key)
+    client = openai.OpenAI(api_key=api_key, timeout=5.0, max_retries=0)
 
     recent_turns = (
         db.query(DialogueTurn)
@@ -271,6 +271,7 @@ def _call_openai_chat(
         messages=messages,
         response_format={"type": "json_object"},
         temperature=0.2,
+        timeout=5.0,
     )
     raw = response.choices[0].message.content
     if raw:
@@ -317,7 +318,8 @@ def _call_gemini_chat(
         })
 
     chat = model.start_chat(history=history)
-    response = chat.send_message(user_message)
+    response = chat.send_message(user_message, request_options={"timeout": 6.0})
+
 
     if response and response.text:
         data = json.loads(response.text)
