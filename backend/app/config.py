@@ -5,18 +5,33 @@ from pathlib import Path
 import os
 
 
+# Resolve default SQLite path to absolute path in repository root
+_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+_DEFAULT_DB_PATH = (_ROOT_DIR / "consumer_assist.db").as_posix()
+
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./consumer_assist.db"
+    DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_PATH}"
     UPLOAD_DIR: str = "./uploads"
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:5173"
     DATA_DIR: str = str(Path(__file__).parent.parent.parent / "data")
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+    SUPABASE_JWT_SECRET: str = ""
+    VITE_SUPABASE_URL: str = ""
+    VITE_SUPABASE_ANON_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
+    GOOGLE_API_KEY: str = ""
+    LLM_MODEL: str = "gpt-4o-mini"  # or "gemini-1.5-flash"
+
     
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()
 
 # Ensure upload dir exists
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+

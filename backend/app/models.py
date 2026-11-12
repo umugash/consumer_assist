@@ -68,6 +68,8 @@ class Case(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Case identity
+    user_id = Column(String, nullable=True, index=True)  # Scoped to authenticated user
+    user_email = Column(String, nullable=True, index=True)
     status = Column(String, default=CaseStatus.ACTIVE.value)
     workflow_stage = Column(String, default=WorkflowStage.INTAKE.value)
     escalation_tier = Column(String, default=EscalationTier.TIER_1_PLATFORM.value)
@@ -187,3 +189,4 @@ class GeneratedDraft(Base):
     metadata_json = Column(JSON, nullable=True)
     
     case = relationship("Case", back_populates="generated_drafts")
+

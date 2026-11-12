@@ -10,6 +10,8 @@ from datetime import datetime
 class ChatRequest(BaseModel):
     case_id: Optional[str] = None
     message: str
+    user_id: Optional[str] = None
+    user_email: Optional[str] = None
     
 
 class SlotState(BaseModel):
@@ -40,6 +42,8 @@ class ChatResponse(BaseModel):
 
 class CaseOverview(BaseModel):
     id: str
+    user_id: Optional[str] = None
+    user_email: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     status: str
@@ -77,6 +81,10 @@ class DocumentUploadResponse(BaseModel):
     processing_status: str
     ocr_text: Optional[str] = None
     extracted_fields: Optional[Dict[str, Any]] = None
+    categorized_as: Optional[str] = None
+    assistant_message: Optional[str] = None
+    readiness_score: Optional[float] = None
+    checklist: Optional[Dict[str, bool]] = None
 
 
 # ── Timeline ──────────────────────────────────────────────────────────────
@@ -170,3 +178,4 @@ class KBQueryResponse(BaseModel):
     query: str
     results: List[Dict[str, Any]]
     sources: List[str]
+
