@@ -32,3 +32,4 @@ Recent advances in legal language processing, including LegalEval, InLegalBERT, 
 
 #### F. Research Gap
 Existing legal NLP research predominantly emphasizes corporate contract risk analysis (CUAD, LEDGAR) or retrospective case-law outcome prediction. Consequently, an operational research gap persists in systems that bridge initial unstructured consumer intake with formal, multi-tier legal redressal. Prior implementations fail to integrate dynamic slot-filling, multimodal evidence verification, timeline anomaly detection, and automated procedural notice generation within a unified, interactive workflow. ConsumerAssist resolves this limitation by delivering a complete, statutorily grounded computational pipeline that empowers consumers from initial informal dispute to formal statutory adjudication.
+

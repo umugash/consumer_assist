@@ -1,0 +1,15 @@
+frontend/node_modules
+frontend/src
+frontend/public
+frontend/.vite
+.git
+.pytest_cache
+tests
+data/sample_receipts
+uploads
+*.db
+*.pdf
+*.docx
+*.md
+verify_system.py
+generate_research_doc.py

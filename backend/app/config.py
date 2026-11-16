@@ -11,7 +11,7 @@ _DEFAULT_DB_PATH = (_ROOT_DIR / "consumer_assist.db").as_posix()
 
 class Settings(BaseSettings):
     DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_PATH}"
-    UPLOAD_DIR: str = "./uploads"
+    UPLOAD_DIR: str = "/tmp/uploads" if os.environ.get("VERCEL") else "./uploads"
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:5173"
@@ -33,5 +33,9 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Ensure upload dir exists
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+try:
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+except Exception:
+    pass
+
 
