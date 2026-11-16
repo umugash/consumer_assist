@@ -19,8 +19,13 @@ else:
         "max_overflow": 20,
     })
 
+# Normalize driver prefix for PostgreSQL (psycopg2)
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 engine = create_engine(
-    settings.DATABASE_URL,
+    db_url,
     connect_args=connect_args,
     **engine_kwargs,
 )
@@ -40,9 +45,13 @@ def get_db():
 
 def init_db():
     """Create all tables."""
-    from app.models import (
-        Case, DialogueTurn, ExtractedEntity, TimelineEvent,
-        EvidenceDocument, EscalationHistory, GeneratedDraft
-    )
-    Base.metadata.create_all(bind=engine)
+    try:
+        from app.models import (
+            Case, DialogueTurn, ExtractedEntity, TimelineEvent,
+            EvidenceDocument, EscalationHistory, GeneratedDraft
+        )
+        Base.metadata.create_all(bind=engine)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(f"Database init skipped or already exists: {exc}")
 
