@@ -137,8 +137,11 @@ app.include_router(evaluation.router)
 
 # ── Static Files (uploads) ─────────────────────────────────────────────────
 
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+try:
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+except Exception:
+    pass
 
 # ── Root Endpoint ──────────────────────────────────────────────────────────
 

@@ -9,9 +9,18 @@ import os
 _ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 _DEFAULT_DB_PATH = (_ROOT_DIR / "consumer_assist.db").as_posix()
 
+def _get_upload_dir() -> str:
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("LAMBDA_TASK_ROOT"):
+        return "/tmp/uploads"
+    try:
+        os.makedirs("./uploads", exist_ok=True)
+        return "./uploads"
+    except OSError:
+        return "/tmp/uploads"
+
 class Settings(BaseSettings):
     DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_PATH}"
-    UPLOAD_DIR: str = "/tmp/uploads" if os.environ.get("VERCEL") else "./uploads"
+    UPLOAD_DIR: str = _get_upload_dir()
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:5173"
