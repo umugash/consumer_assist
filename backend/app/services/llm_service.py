@@ -292,42 +292,92 @@ def _call_gemini_chat(
     db: Session,
     api_key: str,
 ) -> Optional[Dict[str, Any]]:
-    import google.generativeai as genai
-    genai.configure(api_key=api_key)
+    # 1. Try SDK if available
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
 
-    model = genai.GenerativeModel(
-        model_name="gemini-flash-latest",
-        system_instruction=_build_system_prompt(case, db),
-        generation_config={"response_mime_type": "application/json", "temperature": 0.2},
-    )
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            system_instruction=_build_system_prompt(case, db),
+            generation_config={"response_mime_type": "application/json", "temperature": 0.2},
+        )
 
-    recent_turns = (
-        db.query(DialogueTurn)
-        .filter(DialogueTurn.case_id == case.id)
-        .order_by(DialogueTurn.turn_number.desc())
-        .limit(6)
-        .all()
-    )
-    recent_turns.reverse()
+        recent_turns = (
+            db.query(DialogueTurn)
+            .filter(DialogueTurn.case_id == case.id)
+            .order_by(DialogueTurn.turn_number.desc())
+            .limit(6)
+            .all()
+        )
+        recent_turns.reverse()
 
-    history = []
-    for turn in recent_turns:
-        history.append({
-            "role": "model" if turn.role == "assistant" else "user",
-            "parts": [turn.message],
-        })
+        history = []
+        for turn in recent_turns:
+            history.append({
+                "role": "model" if turn.role == "assistant" else "user",
+                "parts": [turn.message],
+            })
 
-    chat = model.start_chat(history=history)
-    response = chat.send_message(user_message, request_options={"timeout": 6.0})
+        chat = model.start_chat(history=history)
+        response = chat.send_message(user_message, request_options={"timeout": 6.0})
 
+        if response and response.text:
+            data = json.loads(response.text)
+            return {
+                "bot_message": data.get("bot_message", ""),
+                "extracted_slots": _normalize_extracted_slots(data.get("extracted_slots", {})),
+                "intent_action": data.get("intent_action", "general_chat"),
+            }
+    except ImportError:
+        pass
 
-    if response and response.text:
-        data = json.loads(response.text)
-        return {
-            "bot_message": data.get("bot_message", ""),
-            "extracted_slots": _normalize_extracted_slots(data.get("extracted_slots", {})),
-            "intent_action": data.get("intent_action", "general_chat"),
+    # 2. Lightweight zero-dependency HTTP REST fallback
+    try:
+        import urllib.request
+        recent_turns = (
+            db.query(DialogueTurn)
+            .filter(DialogueTurn.case_id == case.id)
+            .order_by(DialogueTurn.turn_number.desc())
+            .limit(6)
+            .all()
+        )
+        recent_turns.reverse()
+
+        contents = []
+        for t in recent_turns:
+            contents.append({
+                "role": "model" if t.role == "assistant" else "user",
+                "parts": [{"text": t.message}]
+            })
+        contents.append({"role": "user", "parts": [{"text": user_message}]})
+
+        payload = {
+            "system_instruction": {"parts": [{"text": _build_system_prompt(case, db)}]},
+            "contents": contents,
+            "generationConfig": {"response_mime_type": "application/json", "temperature": 0.2}
         }
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=6.0) as resp:
+            res_data = json.loads(resp.read().decode("utf-8"))
+            candidates = res_data.get("candidates", [])
+            if candidates:
+                part_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "{}")
+                data = json.loads(part_text)
+                return {
+                    "bot_message": data.get("bot_message", ""),
+                    "extracted_slots": _normalize_extracted_slots(data.get("extracted_slots", {})),
+                    "intent_action": data.get("intent_action", "general_chat"),
+                }
+    except Exception as exc:
+        logger.warning(f"Direct Gemini REST call failed: {exc}")
+
     return None
 
 
