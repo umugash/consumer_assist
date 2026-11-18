@@ -12,10 +12,10 @@ import {
 import * as api from './api';
 import {
   AuthUser,
-  getStoredUser,
   signOutUser,
   supabase,
   setStoredUser,
+  setAccessToken,
 } from './supabaseClient';
 
 import { LeftSidebar } from './components/LeftSidebar';
@@ -31,7 +31,7 @@ import { AuthModal } from './components/AuthModal';
 import './styles/global.css';
 
 export const App: React.FC = () => {
-  const [user, setUser] = useState<AuthUser | null>(() => (supabase ? getStoredUser() : null));
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const [cases, setCases] = useState<CaseOverview[]>([]);
@@ -84,43 +84,33 @@ export const App: React.FC = () => {
 
   // Check Supabase session on mount (if OAuth redirected back)
   useEffect(() => {
-    if (supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          const authUser: AuthUser = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-            avatar_url: session.user.user_metadata?.avatar_url,
-            isDemo: false,
-          };
-          setUser(authUser);
-          setStoredUser(authUser);
-        } else {
-          setUser(null);
-          setStoredUser(null);
-        }
-      });
+    if (!supabase) return;
+    // Supabase docs: never call supabase.auth.* or trigger heavy work synchronously
+    // inside onAuthStateChange; defer it so the auth lock is released first.
+    const applySession = (session: any) => {
+      setAccessToken(session?.access_token ?? null);
+      if (session?.user) {
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
+          avatar_url: session.user.user_metadata?.avatar_url,
+          isDemo: false,
+        };
+        setStoredUser(authUser);
+        // Same id (e.g. TOKEN_REFRESHED) -> keep the same object so data isn't reloaded.
+        setUser((prev) => (prev && prev.id === authUser.id ? prev : authUser));
+      } else {
+        setStoredUser(null);
+        setUser(null);
+      }
+    };
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session?.user) {
-          const authUser: AuthUser = {
-            id: session.user.id,
-            email: session.user.email || '',
-            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-            avatar_url: session.user.user_metadata?.avatar_url,
-            isDemo: false,
-          };
-          setUser(authUser);
-          setStoredUser(authUser);
-        } else {
-          setUser(null);
-          setStoredUser(null);
-        }
-      });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setTimeout(() => applySession(session), 0);
+    });
 
-      return () => subscription.unsubscribe();
-    }
+    return () => subscription.unsubscribe();
   }, []);
 
   // Reload user cases whenever user changes

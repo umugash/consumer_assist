@@ -56,10 +56,16 @@ export async function signInWithGoogleSupabase(): Promise<void> {
   }
 }
 
+// Kept in sync from auth events. Calling supabase.auth.getSession() per request
+// contends for the auth lock held during onAuthStateChange and can deadlock the page.
+let currentToken: string | null = null;
+
+export function setAccessToken(token: string | null) {
+  currentToken = token;
+}
+
 export async function getAccessToken(): Promise<string | null> {
-  if (!supabase) return null;
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
+  return currentToken;
 }
 
 export async function signOutUser(): Promise<void> {
