@@ -16,7 +16,7 @@ async function apiFetch(url: string, init: RequestInit = {}): Promise<Response> 
   const token = await getAccessToken();
   const headers = new Headers(init.headers);
   if (token) headers.set('Authorization', `Bearer ${token}`);
-  const res = await apiFetch(url, { ...init, headers });
+  const res = await fetch(url, { ...init, headers });
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).detail || detail; } catch { /* non-JSON error body */ }
