@@ -214,6 +214,14 @@ export const App: React.FC = () => {
       return true;
     } catch (err: any) {
       console.error('Chat error:', err);
+      if (err.message === 'Case not found') {
+        // Selected case no longer exists for this user: drop it so the next send starts a new case.
+        setActiveCaseId(null);
+        setCaseDetail(null);
+        loadCases();
+        setChatError('That case is no longer available. Please send your message again to start a new grievance.');
+        return false;
+      }
       setChatError(err.message || 'Message failed to send. Please check your connection or try again.');
       return false;
     } finally {

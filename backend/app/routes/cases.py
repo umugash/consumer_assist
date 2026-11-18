@@ -191,6 +191,11 @@ def escalate_case(req: EscalationRequest, case_id: str, _owner: Case = Depends(o
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
+    from app.services.dialogue_manager import DialogueManager, _EARLY_STAGES
+    missing = DialogueManager()._get_missing_slots(case)
+    if req.action != "set_stage" and case.workflow_stage in _EARLY_STAGES and missing:
+        raise HTTPException(status_code=400, detail="Please provide these case details first: " + ", ".join(m.replace("_", " ") for m in missing))
+
     escalation_engine = EscalationEngine()
 
     if req.action == "set_stage" and req.target_stage:

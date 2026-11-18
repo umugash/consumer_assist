@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     LLM_TIMEOUT_SECONDS: float = 12.0
 
     
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
+    model_config = {"env_file": str(_ROOT_DIR / ".env"), "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

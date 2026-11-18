@@ -158,7 +158,8 @@ class DialogueManager:
         logger.info(f"LLM routed intent '{intent_action}' with provider '{llm_res.get('provider_used')}'")
 
         # 2. Handle Advance / Skip Intent ──────────────────────────────────
-        wants_advance = intent_action == "advance_stage" or (
+        # An answer that carries case details is slot-filling even if the LLM tagged it "advance".
+        wants_advance = (intent_action == "advance_stage" and not llm_slots) or (
             intent_action != "answer_query" and _ADVANCE_RE.search(clean_text_lower)
         )
         if wants_advance and case.workflow_stage in _EARLY_STAGES and self._get_missing_slots(case):
