@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 # ── Known grievance officer contacts (from knowledge base) ─────────────────
 
 _GRIEVANCE_CONTACTS: Dict[str, Dict[str, str]] = {
+    "zepto": {  # source: data/verified_kb.json
+        "email": "grievance@zeptonow.com",
+        "name": "Grievance Officer, Zepto (KiranaKart Technologies Pvt. Ltd.)",
+    },
     "amazon": {
         "email": "grievance-officer@amazon.in",
         "name": "Grievance Officer, Amazon India",
@@ -62,7 +66,9 @@ _DEFAULT_GRIEVANCE = {
 def _get_grievance_contact(platform: Optional[str]) -> Dict[str, str]:
     if not platform:
         return _DEFAULT_GRIEVANCE
-    return _GRIEVANCE_CONTACTS.get(platform.strip().lower(), _DEFAULT_GRIEVANCE)
+    key = platform.strip().lower()
+    # "Swiggy Instamart", "Amazon India" etc. match their base platform
+    return next((v for k, v in _GRIEVANCE_CONTACTS.items() if k in key), _DEFAULT_GRIEVANCE)
 
 
 def _format_date(dt: Optional[datetime]) -> str:

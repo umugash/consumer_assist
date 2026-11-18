@@ -195,7 +195,8 @@ B. If the user corrects an earlier value ("actually it was ₹2,100", "sorry, it
 C. platform = the e-commerce platform/app where the order was placed (Amazon, Flipkart, Zepto, Blinkit, Swiggy Instamart, Myntra, Meesho, ...). A brand mentioned as a product ("Amazon Pay gift card bought on Zepto", "Samsung phone") is NOT the platform.
 D. amount = the money the consumer actually paid / is disputing. Face values, denominations, MRP printed on packaging or prices of other items are NOT the amount. If several amounts are ambiguous, set amount null and ask which one was paid.
 E. incident_date in YYYY-MM-DD; resolve relative dates (yesterday, last Monday) using today's date and Indian DD/MM/YYYY ordering. If unsure, null and ask.
-F. issue_category must be one of: Non-Delivery, Damaged/Defective Item, Wrong/Missing Item, Refund Delayed/Denied, Hidden Charges/Overbilling, Expired Food/Quick-Commerce Issue, Other.
+F. issue_category must be one of: Non-Delivery, Damaged/Defective Item, Wrong/Missing Item, Refund Delayed/Denied, Hidden Charges/Overbilling, Expired Food/Quick-Commerce Issue, Other. Being charged above the printed MRP, or extra/undisclosed fees, is Hidden Charges/Overbilling.
+H. Never tell the user to look in a tab or panel; everything they need is given in the chat itself. If the user says they don't have a detail, accept it and move on.
 G. Typos and informal Hinglish are normal; interpret intent generously.
 
 BEHAVIORAL RULES:

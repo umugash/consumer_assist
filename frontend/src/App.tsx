@@ -209,7 +209,7 @@ export const App: React.FC = () => {
         setActiveCaseId(res.case_id);
         await loadCases();
       } else {
-        await loadCaseData(res.case_id);
+        await Promise.all([loadCaseData(res.case_id), loadCases()]); // keep sidebar card in sync
       }
       return true;
     } catch (err: any) {
@@ -262,15 +262,8 @@ export const App: React.FC = () => {
   const handleAdvanceStage = async () => {
     if (!requireAuth()) return;
     if (!activeCaseId) return;
-    setLoading(true);
-    try {
-      await api.escalateCase(activeCaseId, 'advance');
-      await loadCaseData(activeCaseId);
-    } catch (err) {
-      console.error('Advance error:', err);
-    } finally {
-      setLoading(false);
-    }
+    // Same path as typing "proceed": the chat then shows the letter / filing steps for the new stage.
+    await handleSendMessage('proceed');
   };
 
   const handleGenerateDraft = async (draftType: string) => {

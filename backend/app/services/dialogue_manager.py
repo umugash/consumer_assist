@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
 from app.models import (
-    Case, DialogueTurn, ExtractedEntity, EvidenceDocument,
+    Case, CaseStatus, DialogueTurn, ExtractedEntity, EvidenceDocument,
     IssueCategory, WorkflowStage,
 )
 from app.services.nlp_extractor import (
@@ -24,6 +24,31 @@ from app.services.llm_service import chat_with_llm, is_cod_message
 
 _ADVANCE_RE = re.compile(r"\b(skip|proceed|next stage|advance stage|move on)\b")
 _CORRECTION_RE = re.compile(r"\b(actually|sorry|correction|correct(?:ed)? (?:it|amount|date)|not .* but|instead|changed?|wrong(?:ly)?)\b")
+_RESOLVED_RE = re.compile(r"\b(refund(?:ed)?|resolved|sorted|apologi[sz]ed|apology|replaced|replacement|credited|compensat\w*|fixed)\b")
+_UNRESOLVED_RE = re.compile(r"\b(not|no|never|didn'?t|did not|haven'?t|hasn'?t|without|rejected|denied|ignored|only)\b")
+
+
+_QUESTION_RE = re.compile(r"^(what|how|why|when|where|which|who|can|could|is|are|do|does|should|will|explain|tell me)\b")
+
+
+def _looks_like_question(t: str) -> bool:
+    """Offline-only heuristic; word-anchored so 'shows' doesn't read as 'how'."""
+    t = t.strip()
+    return t.endswith("?") or bool(_QUESTION_RE.match(t))
+
+
+def _reply_note(user_message: str, source: str) -> str:
+    if _ADVANCE_RE.search(user_message.lower()):
+        return f"Understood, the {source} hasn't resolved it. "
+    return f'Noted the {source}\'s response: *"{user_message.strip()[:200]}"*. '
+
+
+def is_resolved_reply(text: str) -> bool:
+    """'they refunded and apologised' -> True; 'no refund yet' / 'rejected' -> False."""
+    t = text.lower()
+    return bool(_RESOLVED_RE.search(t)) and not _UNRESOLVED_RE.search(t)
+
+
 _EARLY_STAGES = (WorkflowStage.INTAKE.value, WorkflowStage.CLASSIFICATION.value, WorkflowStage.SLOT_FILLING.value)
 
 logger = logging.getLogger(__name__)
@@ -162,48 +187,31 @@ class DialogueManager:
         wants_advance = (intent_action == "advance_stage" and not llm_slots) or (
             intent_action != "answer_query" and _ADVANCE_RE.search(clean_text_lower)
         )
-        if wants_advance and case.workflow_stage in _EARLY_STAGES and self._get_missing_slots(case):
-            # Stage gate: the core case facts must exist before evidence/drafting stages.
-            missing = self._get_missing_slots(case)
+        # Stage gate: only platform + category are essential; other unknown details may be
+        # skipped and appear as [NOT PROVIDED] in the drafts.
+        critical = [m for m in self._get_missing_slots(case) if m in ("platform", "issue_category")]
+        if wants_advance and case.workflow_stage in _EARLY_STAGES and critical:
+            missing = critical
             bot_reply = (
                 "Before we move on I still need a few case details, so the notice is accurate. "
                 + SLOT_QUESTIONS.get(missing[0], f"Could you share the {missing[0].replace('_', ' ')}?")
             )
             return self._record_turns_and_return(case, user_message, bot_reply, intent="advance_blocked", slots_updated={}, db=db)
-        if wants_advance:
-            if case.workflow_stage == WorkflowStage.EVIDENCE_INGESTION.value:
-                case.workflow_stage = WorkflowStage.TIMELINE_RECONSTRUCTION.value
-                from app.services.timeline_evidence_engine import TimelineEngine
-                tl_engine = TimelineEngine()
-                events = tl_engine.build_timeline(case.id, db)
-                tl_engine.detect_conflicts(case.id, db)
-
-                bot_reply = (
-                    f"Understood! Advancing to **Stage 5: Timeline Reconstruction**.\n\n"
-                    f"I have synthesized **{len(events)} chronological timeline events** from your case facts and evidence documents. "
-                    f"You can review the chronological sequence and audit checks in the **Timeline** tab."
-                )
-            else:
-                # Advance to next stage in STAGE_ORDER
-                cur_val = case.workflow_stage
-                next_val = None
-                for i, st in enumerate(_STAGE_ORDER):
-                    if st.value == cur_val and i < len(_STAGE_ORDER) - 1:
-                        next_val = _STAGE_ORDER[i + 1].value
-                        break
-                if next_val:
-                    case.workflow_stage = next_val
-                    bot_reply = f"Advancing to **{next_val}**.\n\n{bot_message}"
-                else:
-                    bot_reply = bot_message or "Case is already at the final stage."
-
+        # Stages 8 and 10 wait for the platform's / NCH's reply: any non-question
+        # message there is that reply and decides between closing and escalating.
+        awaiting_reply = case.workflow_stage in (
+            WorkflowStage.PLATFORM_TRACKING.value, WorkflowStage.TIER2_READINESS.value,
+            WorkflowStage.NCH_DOCKET.value, WorkflowStage.TIER3_CHECKLIST.value,
+        )
+        # Offline router answers any "NCH"/"court" mention as a question, so rely on phrasing there.
+        is_question = (intent_action == "answer_query") if llm_live else _looks_like_question(clean_text_lower)
+        if wants_advance or (awaiting_reply and not is_question):
+            bot_reply = self._advance_workflow(case, user_message, db)
             return self._record_turns_and_return(case, user_message, bot_reply, intent="advance_stage", slots_updated={}, db=db)
 
         # 3. Handle Question Answering (e.g., "ok what to do in stage 5") ──
         if intent_action == "answer_query" or (
-            not llm_live
-            and any(q in clean_text_lower for q in ["what", "how", "explain", "tell me", "can i", "why"])
-            and not any(slot_k in clean_text_lower for slot_k in ["order id is", "ref is", "amount is", "placed at"])
+            not llm_live and _looks_like_question(clean_text_lower)
         ):
             reply = bot_message or "Good question. I'm keeping all your case details as they are."
             missing = self._get_missing_slots(case)
@@ -453,6 +461,92 @@ class DialogueManager:
 
         return self._record_turns_and_return(
             case, user_message, assistant_message, intent=intent, slots_updated=slots_updated, db=db
+        )
+
+    # ── Escalation workflow (stages 4 → 12) ─────────────────────────────
+
+    def _advance_workflow(self, case: Case, user_message: str, db: Session) -> str:
+        stage = case.workflow_stage
+        if stage in (WorkflowStage.PLATFORM_TRACKING.value, WorkflowStage.NCH_DOCKET.value) and is_resolved_reply(user_message):
+            case.status = CaseStatus.RESOLVED.value
+            db.commit()
+            return ("🎉 Glad it's resolved! I've marked this case as **Resolved**. "
+                    "Keep the platform's confirmation (email/SMS/refund credit) safe in case the issue comes back. "
+                    "You can start a **New Grievance** anytime.")
+        if stage in _EARLY_STAGES:
+            case.workflow_stage = WorkflowStage.EVIDENCE_INGESTION.value
+            db.commit()
+            return "No problem — we'll continue with the details you've given (missing ones are marked [NOT PROVIDED] in your letters).\n\n" + self._build_stage4_intro(case, {})
+        if stage in (WorkflowStage.EVIDENCE_INGESTION.value, WorkflowStage.TIMELINE_RECONSTRUCTION.value,
+                     WorkflowStage.CONFLICT_VERIFICATION.value, WorkflowStage.TIER1_DRAFT.value):
+            return self._tier1_notice(case, db)
+        if stage in (WorkflowStage.PLATFORM_TRACKING.value, WorkflowStage.TIER2_READINESS.value):
+            return self._tier2_nch(case, user_message, db)
+        if stage in (WorkflowStage.NCH_DOCKET.value, WorkflowStage.TIER3_CHECKLIST.value):
+            return self._tier3_ejagriti(case, user_message, db)
+        return ("Your e-Jagriti filing package is ready (see above / Drafts tab). After filing, the Commission will issue a "
+                "case number and hearing date on e-Jagriti. Tell me if you need help with anything else.")
+
+    def _tier1_notice(self, case: Case, db: Session) -> str:
+        from app.services.timeline_evidence_engine import TimelineEngine
+        from app.services.draft_generator import DraftGenerator, _get_grievance_contact
+        from app.services.escalation_engine import EscalationEngine
+        tl = TimelineEngine()
+        events = tl.build_timeline(case.id, db)
+        conflicts = tl.detect_conflicts(case.id, db) or []
+        draft = DraftGenerator().generate_platform_email(case.id, db)
+        EscalationEngine().set_stage(case.id, WorkflowStage.PLATFORM_TRACKING.value, db)
+        contact = _get_grievance_contact(case.platform)
+        email_line = (f"📧 **Send to:** `{contact['email']}` ({contact['name']})"
+                      if "<platform>" not in contact["email"]
+                      else f"📧 **Send to:** {case.platform or 'the platform'}'s Grievance Officer — the email is listed on the app/website under *Grievance Redressal* or *Help → Contact*.")
+        conflict_txt = (f"⚠️ I found {len(conflicts)} inconsistency(ies) between your statements and documents — please double-check the dates/amounts below before sending.\n\n"
+                        if conflicts else "")
+        return (
+            f"✅ I reconstructed your timeline ({len(events)} event(s)) and prepared your **formal complaint letter** (Tier 1).\n\n"
+            f"{conflict_txt}{email_line}\n"
+            f"**Subject:** {draft['title']}\n\n"
+            f"Copy the letter below, replace `[Consumer Name]` and any `[NOT PROVIDED]` with your details, attach your invoice/evidence, and email it:\n\n"
+            f"```\n{draft['content'].strip()}\n```\n\n"
+            "⏳ **Next:** Under Rule 4(5) of the E-Commerce Rules 2020, the Grievance Officer must acknowledge within **48 hours** "
+            "and resolve within **one month**. Wait **3–4 days**, then come back and tell me what happened, e.g. "
+            "*\"they refunded and apologised\"*, *\"they rejected it\"*, or *\"no response\"*. "
+            "If it's not resolved, I'll prepare your National Consumer Helpline (NCH) complaint next."
+        )
+
+    def _tier2_nch(self, case: Case, user_message: str, db: Session) -> str:
+        from app.services.draft_generator import DraftGenerator
+        from app.services.escalation_engine import EscalationEngine
+        case.customer_support_contacted = True
+        db.commit()
+        draft = DraftGenerator().generate_nch_summary(case.id, db)
+        EscalationEngine().set_stage(case.id, WorkflowStage.NCH_DOCKET.value, db)
+        return (
+            f"{_reply_note(user_message, 'platform')}Let's escalate to **Tier 2: National Consumer Helpline (NCH)**.\n\n"
+            "**How to file (free):**\n"
+            "1. Go to 👉 https://consumerhelpline.gov.in (or call **1915**, or the NCH app / WhatsApp **8800001915**).\n"
+            "2. Register with your mobile number and choose **Register Grievance**.\n"
+            f"3. Sector: **E-Commerce**, Company: **{case.platform or 'the platform'}**. Copy-paste the details below into the form and attach your invoice and the platform's reply.\n\n"
+            f"```\n{draft['content'].strip()}\n```\n\n"
+            "You'll get a **docket number**. NCH forwards the complaint to the company; responses usually take **15–30 days**. "
+            "Come back and tell me the outcome — if it's still not resolved, I'll prepare your **e-Jagriti Consumer Commission** filing package."
+        )
+
+    def _tier3_ejagriti(self, case: Case, user_message: str, db: Session) -> str:
+        from app.services.draft_generator import DraftGenerator
+        from app.services.escalation_engine import EscalationEngine
+        draft = DraftGenerator().generate_ejagriti_package(case.id, db)
+        EscalationEngine().set_stage(case.id, WorkflowStage.FINAL_FILING.value, db)
+        return (
+            f"{_reply_note(user_message, 'NCH')}Let's move to **Tier 3: Consumer Commission via e-Jagriti**.\n\n"
+            "**Pre-filing checklist:**\n"
+            f"• Limitation: file within **2 years** of the cause of action (Section 69, CPA 2019) — incident date: **{case.incident_date or 'not provided'}**.\n"
+            f"• Jurisdiction: claims up to ₹50 lakh go to the **District Commission**; you may file where you live (Section 34). Claim value: **₹{case.amount or 'not provided'}**.\n"
+            "• Fee: no fee for claims up to ₹5 lakh.\n"
+            "• Keep ready: ID proof, invoice, the platform's reply / your notice email, and your NCH docket number.\n\n"
+            "**How to file:** 👉 https://e-jagriti.gov.in → Register as Consumer → **File New Case**, then copy-paste the complaint below:\n\n"
+            f"```\n{draft['content'].strip()}\n```\n\n"
+            "This is a **draft for you to file** — nothing has been submitted on your behalf. Review the facts and sign the affidavit before uploading."
         )
 
     # ── Helpers ──────────────────────────────────────────────────────────
