@@ -587,38 +587,64 @@ def analyze_document_with_vision(
     """Inspect an invoice or screenshot with Gemini 1.5 Flash or GPT-4o-mini vision."""
     openai_key, gemini_key = _get_api_keys()
 
-    if gemini_key:
-        try:
-            import google.generativeai as genai
-            genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel(settings.GEMINI_MODEL)
+    if not gemini_key:
+        return None
+    import base64
+    import urllib.request
+    import urllib.error
 
-            with open(file_path, "rb") as f:
-                image_bytes = f.read()
-
-            prompt = """Analyze this consumer grievance evidence document (receipt, invoice, chat log, or delivery status).
+    prompt = """Analyze this consumer grievance evidence document (receipt, invoice, chat log, or delivery status).
+Transcribe only what is visible; use null for anything not present. Never guess values.
+A product photo or packaging/MRP label is NOT an invoice: classify it as a product photo and set total_amount null (put the printed MRP in items[].mrp).
 Return a strict JSON object:
 {
-  "document_type": "Order confirmation / invoice" | "Refund request/status screenshot" | "Payment proof (bank/UPI statement)" | "Photo of received item vs ordered item" | "Chat with customer support",
+  "document_type": "Order confirmation / invoice" | "Refund request/status screenshot" | "Payment proof (bank/UPI statement)" | "Photo of received item vs ordered item" | "Photo of damaged/defective product" | "Chat with customer support" | "Delivery status screenshot",
   "vendor": "string or null",
   "order_id": "string or null",
-  "total_amount": float or null,
-  "date": "YYYY-MM-DD or null",
-  "items": [{"name": "string", "quantity": 1, "unit_price": 0.0, "total": 0.0}],
-  "ocr_text": "text content summary",
-  "status": "success"
-}
-"""
-            mtype = mime_type or ("image/jpeg" if file_path.lower().endswith((".jpg", ".jpeg")) else "image/png")
-            response = model.generate_content([
-                prompt,
-                {"mime_type": mtype, "data": image_bytes},
-            ])
-            if response and response.text:
-                cleaned_text = response.text.strip().removeprefix("```json").removesuffix("```").strip()
-                return json.loads(cleaned_text)
-        except Exception as exc:
-            logger.warning(f"Gemini vision analysis failed: {exc}")
-
+  "invoice_date": "YYYY-MM-DD or null",
+  "total_amount": number or null,
+  "payment_mode": "string or null",
+  "items": [{"name": "string", "quantity": 1, "mrp": 0.0, "unit_price": 0.0, "total": 0.0}],
+  "ocr_text": "verbatim key text from the document"
+}"""
+    path_l = file_path.lower()
+    mtype = mime_type or (
+        "application/pdf" if path_l.endswith(".pdf")
+        else "image/png" if path_l.endswith(".png")
+        else "image/webp" if path_l.endswith(".webp")
+        else "image/jpeg"
+    )
+    with open(file_path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode("ascii")
+    payload = json.dumps({
+        "contents": [{"role": "user", "parts": [
+            {"text": prompt},
+            {"inline_data": {"mime_type": mtype, "data": b64}},
+        ]}],
+        "generationConfig": {"response_mime_type": "application/json", "temperature": 0},
+    }).encode("utf-8")
+    for model in dict.fromkeys([settings.GEMINI_MODEL, "gemini-flash-lite-latest", "gemini-flash-latest"]):
+        req = urllib.request.Request(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            data=payload,
+            headers={"Content-Type": "application/json", "x-goog-api-key": gemini_key},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                res = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            logger.warning(f"Gemini vision model {model} returned HTTP {exc.code}")
+            continue
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"Gemini vision failed ({type(exc).__name__})")
+            return None
+        parts = ((res.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [{}]
+        data = _parse_json_text(parts[0].get("text", ""))
+        if data:
+            if data.get("invoice_date"):
+                data["invoice_date"] = normalize_date(str(data["invoice_date"])) or None
+            return data
+        return None
     return None
 

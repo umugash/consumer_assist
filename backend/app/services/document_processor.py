@@ -74,9 +74,19 @@ def process_document(
     if file_type is None:
         file_type = _infer_file_type(file_path)
 
-    # ── PDF path ──────────────────────────────────────────────────────
+    # ── Plain text (e.g. exported chat transcripts) ──────────────────
+    if file_type == "txt":
+        try:
+            with open(file_path, encoding="utf-8", errors="replace") as fh:
+                text = fh.read()
+        except OSError as exc:
+            return {"ocr_text": None, "extracted_fields": {}, "status": "error", "message": str(exc)}
+        return {"ocr_text": text, "extracted_fields": extract_invoice_fields(text), "status": "success"}
+
+    # ── PDF path: Gemini reads PDFs natively; pdfplumber is the offline fallback ──
     if file_type == "pdf":
-        return _process_pdf(file_path)
+        vision = _vision(file_path, "application/pdf")
+        return vision or _process_pdf(file_path)
 
     # ── Image path ────────────────────────────────────────────────────
     if file_type in ("image", "png", "jpg", "jpeg", "tiff", "bmp"):
@@ -85,10 +95,21 @@ def process_document(
     # ── Unknown type ──────────────────────────────────────────────────
     return {
         "ocr_text": None,
-        "extracted_fields": SAMPLE_RECEIPT_DATA,
+        "extracted_fields": {},
         "status": "fallback",
-        "message": f"Unsupported file type '{file_type}'. Returning sample data.",
+        "message": f"Unsupported file type '{file_type}'.",
     }
+
+
+def _vision(file_path: str, mime_type: Optional[str]) -> Optional[Dict[str, Any]]:
+    try:
+        from app.services.llm_service import analyze_document_with_vision
+        data = analyze_document_with_vision(file_path, mime_type)
+    except Exception:  # noqa: BLE001 - any vision failure falls back to local extraction
+        return None
+    if not data:
+        return None
+    return {"ocr_text": data.get("ocr_text", ""), "extracted_fields": data, "status": "success"}
 
 
 def categorize_document(text: str, filename: str, file_type: str = "") -> str:
@@ -150,15 +171,15 @@ def _process_pdf(file_path: str) -> Dict[str, Any]:
     if not _PDFPLUMBER_AVAILABLE:
         return {
             "ocr_text": None,
-            "extracted_fields": SAMPLE_RECEIPT_DATA,
+            "extracted_fields": {},
             "status": "fallback",
-            "message": "pdfplumber is not installed. Returning sample data.",
+            "message": "pdfplumber is not installed.",
         }
 
     if not os.path.isfile(file_path):
         return {
             "ocr_text": None,
-            "extracted_fields": SAMPLE_RECEIPT_DATA,
+            "extracted_fields": {},
             "status": "error",
             "message": f"File not found: {file_path}",
         }
@@ -175,9 +196,9 @@ def _process_pdf(file_path: str) -> Dict[str, Any]:
         if not full_text.strip():
             return {
                 "ocr_text": "",
-                "extracted_fields": SAMPLE_RECEIPT_DATA,
+                "extracted_fields": {},
                 "status": "empty",
-                "message": "PDF contained no extractable text. Returning sample data.",
+                "message": "PDF contained no extractable text.",
             }
 
         extracted = extract_invoice_fields(full_text)
@@ -189,7 +210,7 @@ def _process_pdf(file_path: str) -> Dict[str, Any]:
     except Exception as exc:  # noqa: BLE001
         return {
             "ocr_text": None,
-            "extracted_fields": SAMPLE_RECEIPT_DATA,
+            "extracted_fields": {},
             "status": "error",
             "message": f"PDF processing error: {exc}",
         }
@@ -201,23 +222,15 @@ def _process_image(file_path: str) -> Dict[str, Any]:
     if not os.path.isfile(file_path):
         return {
             "ocr_text": None,
-            "extracted_fields": SAMPLE_RECEIPT_DATA,
+            "extracted_fields": {},
             "status": "error",
             "message": f"File not found: {file_path}",
         }
 
     # 1. Attempt LLM Multimodal Vision Analysis first if API key is configured
-    try:
-        from app.services.llm_service import analyze_document_with_vision
-        vision_data = analyze_document_with_vision(file_path)
-        if vision_data:
-            return {
-                "ocr_text": vision_data.get("ocr_text", ""),
-                "extracted_fields": vision_data,
-                "status": "success",
-            }
-    except Exception as exc:  # noqa: BLE001
-        pass
+    vision = _vision(file_path, None)
+    if vision:
+        return vision
 
     # 2. Local OCR via Tesseract if available
     if _TESSERACT_AVAILABLE:
