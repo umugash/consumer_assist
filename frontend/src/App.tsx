@@ -31,7 +31,7 @@ import { AuthModal } from './components/AuthModal';
 import './styles/global.css';
 
 export const App: React.FC = () => {
-  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
+  const [user, setUser] = useState<AuthUser | null>(() => (supabase ? getStoredUser() : null));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const [cases, setCases] = useState<CaseOverview[]>([]);
@@ -96,6 +96,9 @@ export const App: React.FC = () => {
           };
           setUser(authUser);
           setStoredUser(authUser);
+        } else {
+          setUser(null);
+          setStoredUser(null);
         }
       });
 
@@ -110,6 +113,9 @@ export const App: React.FC = () => {
           };
           setUser(authUser);
           setStoredUser(authUser);
+        } else {
+          setUser(null);
+          setStoredUser(null);
         }
       });
 

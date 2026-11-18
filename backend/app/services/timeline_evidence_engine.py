@@ -427,7 +427,8 @@ class EvidenceEngine:
         # Check if Cash on Delivery (COD) was reported in turns or case records
         is_cod = False
         user_msgs = [t.message.lower() for t in case.dialogue_turns if t.role == "user" and t.message]
-        if any("cod" in m or "cash on delivery" in m or "paid by cash" in m or "paid as cod" in m or "cash payment" in m for m in user_msgs):
+        from app.services.llm_service import is_cod_message
+        if any(is_cod_message(m) for m in user_msgs):
             is_cod = True
         if case.evidence_gap_checklist and case.evidence_gap_checklist.get("Payment proof (bank/UPI statement)"):
             is_cod = True

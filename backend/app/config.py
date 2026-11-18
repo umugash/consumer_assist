@@ -9,18 +9,9 @@ import os
 _ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 _DEFAULT_DB_PATH = (_ROOT_DIR / "consumer_assist.db").as_posix()
 
-def _get_upload_dir() -> str:
-    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("LAMBDA_TASK_ROOT"):
-        return "/tmp/uploads"
-    try:
-        os.makedirs("./uploads", exist_ok=True)
-        return "./uploads"
-    except OSError:
-        return "/tmp/uploads"
-
 class Settings(BaseSettings):
     DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_PATH}"
-    UPLOAD_DIR: str = _get_upload_dir()
+    UPLOAD_DIR: str = "/tmp/uploads" if os.environ.get("VERCEL") else "./uploads"
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:5173"
@@ -33,7 +24,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
-    LLM_MODEL: str = "gpt-4o-mini"  # or "gemini-1.5-flash"
+    LLM_MODEL: str = "gpt-4o-mini"  # legacy name, kept for existing .env files
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    GEMINI_MODEL: str = "gemini-flash-lite-latest"  # gemini-1.5-* models are retired; lite is fastest + least overloaded
+    LLM_TIMEOUT_SECONDS: float = 12.0
 
     
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}

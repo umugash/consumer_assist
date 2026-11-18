@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
@@ -61,12 +62,12 @@ STAGE_GUIDES: Dict[int, Dict[str, str]] = {
     },
     7: {
         "name": "Tier 1: Platform Grievance Routing & Draft",
-        "description": "Synthesizing a statutory legal grievance notice citing Rule 5(3)(b) Consumer Protection (E-Commerce) Rules 2020 addressed to the Grievance Officer.",
+        "description": "Synthesizing a statutory legal grievance notice citing Rule 4(5) of the Consumer Protection (E-Commerce) Rules 2020 addressed to the Grievance Officer.",
         "user_action": "Copy and email the generated legal notice to the platform's Grievance Officer.",
     },
     8: {
         "name": "Platform SLA/Response Tracking",
-        "description": "Monitoring the statutory 48-hour acknowledgment and 30-day resolution window for the platform's response.",
+        "description": "Monitoring the statutory 48-hour acknowledgment and one-month redressal window (Rule 4(5)) for the platform's response.",
         "user_action": "Record whether the platform accepted, rejected, or ignored your notice.",
     },
     9: {
@@ -126,33 +127,35 @@ def chat_with_llm(
     """
     openai_key, gemini_key = _get_api_keys()
 
-    # If keys exist, attempt real LLM API call first
-    if openai_key:
-        try:
-            res = _call_openai_chat(case, user_message, db, openai_key)
-            if res:
-                res["provider_used"] = "openai"
-                return res
-        except Exception as exc:
-            try: db.rollback()
-            except Exception: pass
-            logger.warning(f"OpenAI chat routing failed ({exc}), falling back to local engine.")
-
+    providers = []
     if gemini_key:
+        providers.append(("gemini", _call_gemini_chat, gemini_key))
+    if openai_key:
+        providers.append(("openai", _call_openai_chat, openai_key))
+    for name, fn, key in providers:
         try:
-            res = _call_gemini_chat(case, user_message, db, gemini_key)
+            res = _validate_llm_output(fn(case, user_message, db, key))
             if res:
-                res["provider_used"] = "gemini"
+                res["provider_used"] = name
                 return res
+            logger.warning(f"{name} returned an invalid/empty structured response; trying next provider.")
         except Exception as exc:
             try: db.rollback()
             except Exception: pass
-            logger.warning(f"Gemini chat routing failed ({exc}), falling back to local engine.")
+            # Only the type is logged: exception text could echo request details.
+            logger.warning(f"{name} chat routing failed ({type(exc).__name__}); trying next provider.")
 
     # High-precision Zero-Failure Local Fallback
     fallback_res = _local_fallback_router(case, user_message, db)
     fallback_res["provider_used"] = "local_rules_engine"
     return fallback_res
+
+
+_REQUIRED_FOR_PROMPT = ("platform", "order_id", "issue_category", "amount", "incident_date", "resolution_sought")
+
+
+def _missing_required(case: Case) -> List[str]:
+    return [s for s in _REQUIRED_FOR_PROMPT if getattr(case, s, None) in (None, "")]
 
 
 def _build_system_prompt(case: Case, db: Session) -> str:
@@ -183,13 +186,28 @@ CURRENT CASE CONTEXT:
 - Ingested Documents ({len(docs)}):
 {doc_str}
 
+- Today's date: {datetime.now().strftime('%Y-%m-%d (%A)')}
+- Still missing (ask for ONE of these, conversationally, when not answering a question): {', '.join(_missing_required(case)) or 'none'}
+
+SLOT EXTRACTION RULES (critical):
+A. extracted_slots must contain ONLY values the user states or corrects in their LATEST message; use null for everything else. Never invent values, never repeat existing values.
+B. If the user corrects an earlier value ("actually it was ₹2,100", "sorry, it was Flipkart"), return the new value.
+C. platform = the e-commerce platform/app where the order was placed (Amazon, Flipkart, Zepto, Blinkit, Swiggy Instamart, Myntra, Meesho, ...). A brand mentioned as a product ("Amazon Pay gift card bought on Zepto", "Samsung phone") is NOT the platform.
+D. amount = the money the consumer actually paid / is disputing. Face values, denominations, MRP printed on packaging or prices of other items are NOT the amount. If several amounts are ambiguous, set amount null and ask which one was paid.
+E. incident_date in YYYY-MM-DD; resolve relative dates (yesterday, last Monday) using today's date and Indian DD/MM/YYYY ordering. If unsure, null and ask.
+F. issue_category must be one of: Non-Delivery, Damaged/Defective Item, Wrong/Missing Item, Refund Delayed/Denied, Hidden Charges/Overbilling, Expired Food/Quick-Commerce Issue, Other.
+G. Typos and informal Hinglish are normal; interpret intent generously.
+
 BEHAVIORAL RULES:
-1. Always be conversational, concise, and helpful (1-3 sentences maximum).
+1. Always be conversational, concise, and helpful (1-4 sentences). Never restart the workflow or re-ask for details already in CURRENT CASE CONTEXT.
+1a. If the user asks you to repeat or asks about something said earlier, use the conversation history.
+1b. Explain legal concepts only at a general level: Rule 4(5) of the Consumer Protection (E-Commerce) Rules 2020 requires the platform Grievance Officer to acknowledge a complaint within 48 hours and redress it within one month; NCH (1915 / consumerhelpline.gov.in) is pre-litigation mediation; e-Jagriti is the e-filing portal for Consumer Commissions (complaint under Section 35, limitation 2 years under Section 69 of the Consumer Protection Act 2019). Do not invent other provisions, deadlines or document requirements; say you are not certain if asked something outside this.
+1c. Questions ("why do you need my invoice?", "is a bank statement compulsory?", "what happens next?") must use intent_action "answer_query" and never advance the stage. An invoice proves the transaction, amount and seller; bank/UPI proof is waived for Cash on Delivery; the user may skip any document and continue, with a lower readiness score.
 2. NEVER copy-paste long, repetitive evidence checklists or boilerplate forms into the chat.
 3. If the user asks a question (e.g. "what to do in stage 5", "how does NCH work?", "what is the limitation period?"):
    - Set intent_action: "answer_query"
    - Answer the question directly and conversationally in 1-2 sentences. If asking about a stage, explain what that stage does and mention they can advance when ready.
-4. If the user wants to advance (e.g. "proceed", "skip", "advance", "next stage", "done"):
+4. Only if the user explicitly asks to move on (e.g. "proceed", "skip", "next stage", "done uploading"):
    - Set intent_action: "advance_stage"
 5. If the user mentions payment method is Cash on Delivery ("paid as cod", "cash"):
    - Set intent_action: "waive_evidence"
@@ -247,16 +265,9 @@ def _call_openai_chat(
     api_key: str,
 ) -> Optional[Dict[str, Any]]:
     import openai
-    client = openai.OpenAI(api_key=api_key, timeout=5.0, max_retries=0)
+    client = openai.OpenAI(api_key=api_key, timeout=settings.LLM_TIMEOUT_SECONDS, max_retries=0)
 
-    recent_turns = (
-        db.query(DialogueTurn)
-        .filter(DialogueTurn.case_id == case.id)
-        .order_by(DialogueTurn.turn_number.desc())
-        .limit(6)
-        .all()
-    )
-    recent_turns.reverse()
+    recent_turns = _recent_history(case, db)
 
     messages = [{"role": "system", "content": _build_system_prompt(case, db)}]
     for turn in recent_turns:
@@ -267,24 +278,28 @@ def _call_openai_chat(
     messages.append({"role": "user", "content": user_message})
 
     response = client.chat.completions.create(
-        model=settings.LLM_MODEL or "gpt-4o-mini",
+        model=settings.OPENAI_MODEL,
         messages=messages,
         response_format={"type": "json_object"},
         temperature=0.2,
-        timeout=5.0,
+        timeout=settings.LLM_TIMEOUT_SECONDS,
     )
-    raw = response.choices[0].message.content
-    if raw:
-        data = json.loads(raw)
-        return {
-            "bot_message": data.get("bot_message", ""),
-            "extracted_slots": _normalize_extracted_slots(data.get("extracted_slots", {})),
-            "intent_action": data.get("intent_action", "general_chat"),
-        }
-    return None
+    return _parse_json_text(response.choices[0].message.content or "")
 
 
 # ── Google Gemini Provider ──────────────────────────────────────────────────
+
+def _recent_history(case: Case, db: Session, limit: int = 10) -> List[DialogueTurn]:
+    turns = (
+        db.query(DialogueTurn)
+        .filter(DialogueTurn.case_id == case.id)
+        .order_by(DialogueTurn.turn_number.desc())
+        .limit(limit)
+        .all()
+    )
+    turns.reverse()
+    return turns
+
 
 def _call_gemini_chat(
     case: Case,
@@ -292,94 +307,108 @@ def _call_gemini_chat(
     db: Session,
     api_key: str,
 ) -> Optional[Dict[str, Any]]:
-    # 1. Try SDK if available
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
+    """Call Gemini over REST. The google.generativeai SDK is deprecated and the
+    1.5 models it targeted are retired. The key goes in a header, never the URL."""
+    import urllib.request
+    import urllib.error
 
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=_build_system_prompt(case, db),
-            generation_config={"response_mime_type": "application/json", "temperature": 0.2},
-        )
+    contents: List[Dict[str, Any]] = []
+    for t in _recent_history(case, db):
+        role = "model" if t.role == "assistant" else "user"
+        if contents and contents[-1]["role"] == role:  # Gemini wants alternating roles
+            contents[-1]["parts"][0]["text"] += "\n" + t.message
+        else:
+            contents.append({"role": role, "parts": [{"text": t.message}]})
+    if contents and contents[0]["role"] == "model":
+        contents.insert(0, {"role": "user", "parts": [{"text": "(conversation start)"}]})
+    if contents and contents[-1]["role"] == "user":
+        contents.append({"role": "model", "parts": [{"text": "(noted)"}]})
+    contents.append({"role": "user", "parts": [{"text": user_message}]})
 
-        recent_turns = (
-            db.query(DialogueTurn)
-            .filter(DialogueTurn.case_id == case.id)
-            .order_by(DialogueTurn.turn_number.desc())
-            .limit(6)
-            .all()
-        )
-        recent_turns.reverse()
+    payload = json.dumps({
+        "system_instruction": {"parts": [{"text": _build_system_prompt(case, db)}]},
+        "contents": contents,
+        "generationConfig": {"response_mime_type": "application/json", "temperature": 0.2},
+    }).encode("utf-8")
 
-        history = []
-        for turn in recent_turns:
-            history.append({
-                "role": "model" if turn.role == "assistant" else "user",
-                "parts": [turn.message],
-            })
-
-        chat = model.start_chat(history=history)
-        response = chat.send_message(user_message, request_options={"timeout": 6.0})
-
-        if response and response.text:
-            data = json.loads(response.text)
-            return {
-                "bot_message": data.get("bot_message", ""),
-                "extracted_slots": _normalize_extracted_slots(data.get("extracted_slots", {})),
-                "intent_action": data.get("intent_action", "general_chat"),
-            }
-    except ImportError:
-        pass
-
-    # 2. Lightweight zero-dependency HTTP REST fallback
-    try:
-        import urllib.request
-        recent_turns = (
-            db.query(DialogueTurn)
-            .filter(DialogueTurn.case_id == case.id)
-            .order_by(DialogueTurn.turn_number.desc())
-            .limit(6)
-            .all()
-        )
-        recent_turns.reverse()
-
-        contents = []
-        for t in recent_turns:
-            contents.append({
-                "role": "model" if t.role == "assistant" else "user",
-                "parts": [{"text": t.message}]
-            })
-        contents.append({"role": "user", "parts": [{"text": user_message}]})
-
-        payload = {
-            "system_instruction": {"parts": [{"text": _build_system_prompt(case, db)}]},
-            "contents": contents,
-            "generationConfig": {"response_mime_type": "application/json", "temperature": 0.2}
-        }
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    models = [settings.GEMINI_MODEL] + [m for m in ("gemini-flash-lite-latest", "gemini-flash-latest") if m != settings.GEMINI_MODEL]
+    last_exc: Optional[Exception] = None
+    for model in models:
         req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST"
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            data=payload,
+            headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+            method="POST",
         )
-        with urllib.request.urlopen(req, timeout=6.0) as resp:
-            res_data = json.loads(resp.read().decode("utf-8"))
-            candidates = res_data.get("candidates", [])
-            if candidates:
-                part_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "{}")
-                data = json.loads(part_text)
-                return {
-                    "bot_message": data.get("bot_message", ""),
-                    "extracted_slots": _normalize_extracted_slots(data.get("extracted_slots", {})),
-                    "intent_action": data.get("intent_action", "general_chat"),
-                }
-    except Exception as exc:
-        logger.warning(f"Direct Gemini REST call failed: {exc}")
-
+        try:
+            with urllib.request.urlopen(req, timeout=settings.LLM_TIMEOUT_SECONDS) as resp:
+                res_data = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            last_exc = exc
+            logger.warning(f"Gemini model {model} returned HTTP {exc.code}")
+            if exc.code in (404, 429, 500, 503):  # retired / quota / overloaded -> next model
+                continue
+            raise
+        candidates = res_data.get("candidates") or []
+        if not candidates:
+            return None
+        parts = candidates[0].get("content", {}).get("parts") or [{}]
+        return _parse_json_text(parts[0].get("text", ""))
+    if last_exc:
+        raise last_exc
     return None
 
+
+def _parse_json_text(text: str) -> Optional[Dict[str, Any]]:
+    cleaned = (text or "").strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    try:
+        data = json.loads(cleaned)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
+_VALID_INTENTS = {"advance_stage", "slot_fill", "answer_query", "waive_evidence", "correct_category", "general_chat"}
+_NULLISH = {"null", "none", "n/a", "unknown", "not provided"}
+
+
+def _validate_llm_output(data: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Reject malformed LLM output before it can touch case state."""
+    if not isinstance(data, dict):
+        return None
+    msg = data.get("bot_message")
+    intent = data.get("intent_action")
+    if not isinstance(msg, str) or not msg.strip() or intent not in _VALID_INTENTS:
+        return None
+    clean: Dict[str, Any] = {}
+    for k, v in _normalize_extracted_slots(data.get("extracted_slots") or {}).items():
+        if v is None or (isinstance(v, str) and v.strip().lower() in _NULLISH | {""}):
+            continue
+        if k == "amount":
+            try:
+                v = float(str(v).replace(",", "").replace("₹", "").replace("Rs", "").strip())
+            except ValueError:
+                continue
+            if v <= 0:
+                continue
+        elif k == "incident_date":
+            v = normalize_date(str(v))
+            if not v:
+                continue
+        elif k == "customer_support_contacted":
+            if not isinstance(v, bool):
+                continue
+        elif k in ("platform", "order_id", "issue_category", "resolution_sought", "payment_mode", "document_type"):
+            v = str(v).strip()[:200]
+        else:
+            continue
+        clean[k] = v
+    return {"bot_message": msg.strip(), "extracted_slots": clean, "intent_action": intent}
+
+
+def is_cod_message(text_lower: str) -> bool:
+    """Word-boundary COD detection ('promo code' must not waive evidence)."""
+    return bool(re.search(r"\bcod\b|cash on delivery|\bpaid (?:by|in|as) cash\b|\bcash payment\b", text_lower))
 
 
 # ── Intelligent Zero-Failure Fallback Router ────────────────────────────────
@@ -421,8 +450,7 @@ def _local_fallback_router(
         }
 
     # 3. Check for Cash on Delivery / COD
-    cod_phrases = ["cod", "cash on delivery", "paid as cod", "paid by cash", "cash payment", "paid in cash"]
-    if any(cp in clean_lower for cp in cod_phrases):
+    if is_cod_message(clean_lower):
         return {
             "bot_message": "Understood! Since this order was paid via Cash on Delivery (COD), the bank/UPI statement requirement is waived.",
             "extracted_slots": {"payment_mode": "COD"},
@@ -563,7 +591,7 @@ def analyze_document_with_vision(
         try:
             import google.generativeai as genai
             genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel("gemini-flash-latest")
+            model = genai.GenerativeModel(settings.GEMINI_MODEL)
 
             with open(file_path, "rb") as f:
                 image_bytes = f.read()

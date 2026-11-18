@@ -8,11 +8,15 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.auth import owned_case
 from app.config import settings
 from app.models import Case, EvidenceDocument, TimelineEvent, DialogueTurn
 from app.schemas import DocumentUploadResponse
 from app.services.document_processor import process_document, categorize_document
 from app.services.timeline_evidence_engine import EvidenceEngine, EVIDENCE_REQUIREMENTS
+
+ALLOWED_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".txt", ".mp4", ".mov"}
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
@@ -21,6 +25,7 @@ router = APIRouter(prefix="/api/documents", tags=["Documents"])
 async def upload_document(
     case_id: str,
     file: UploadFile = File(...),
+    _owner: Case = Depends(owned_case),
     db: Session = Depends(get_db),
 ):
     """Upload an invoice, receipt, or chat screenshot, run OCR, and extract fields."""
@@ -32,13 +37,20 @@ async def upload_document(
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
     # Generate unique filename on disk
-    file_ext = Path(file.filename).suffix.lower()
+    file_ext = Path(file.filename or "").suffix.lower()
+    if file_ext not in ALLOWED_EXTS:
+        raise HTTPException(status_code=415, detail=f"Unsupported file type. Allowed: {', '.join(sorted(ALLOWED_EXTS))}")
+    data = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File too large (max 10 MB)")
+    if not data:
+        raise HTTPException(status_code=400, detail="Empty file")
     doc_id = str(uuid.uuid4())
     save_filename = f"{doc_id}{file_ext}"
     dest_path = os.path.join(settings.UPLOAD_DIR, save_filename)
 
     with open(dest_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(data)
 
     # Process document OCR & extraction
     clean_ext = file_ext.replace(".", "")

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.auth import current_user, owned_case
 from app.models import Case, DialogueTurn, CaseStatus, WorkflowStage, EscalationTier
 from app.schemas import ChatRequest, ChatResponse, SlotState
 from app.services.dialogue_manager import DialogueManager
@@ -12,18 +13,18 @@ router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
 
 @router.post("/send", response_model=ChatResponse)
-async def send_message(req: ChatRequest, db: Session = Depends(get_db)):
+async def send_message(req: ChatRequest, user: dict = Depends(current_user), db: Session = Depends(get_db)):
     """Process a user message. Creates a new case when ``case_id`` is absent."""
 
     # Resolve or create case
     if req.case_id:
-        case = db.query(Case).filter(Case.id == req.case_id).first()
+        case = db.query(Case).filter(Case.id == req.case_id, Case.user_id == user["id"]).first()
         if not case:
             raise HTTPException(status_code=404, detail="Case not found")
     else:
         case = Case(
-            user_id=req.user_id,
-            user_email=req.user_email,
+            user_id=user["id"],
+            user_email=user.get("email"),
             status=CaseStatus.ACTIVE.value,
             workflow_stage=WorkflowStage.INTAKE.value,
             escalation_tier=EscalationTier.TIER_1_PLATFORM.value,
@@ -33,10 +34,6 @@ async def send_message(req: ChatRequest, db: Session = Depends(get_db)):
         db.refresh(case)
 
     # If case exists but user_id was not set, backfill it
-    if req.user_id and not case.user_id:
-        case.user_id = req.user_id
-        case.user_email = req.user_email
-        db.commit()
 
     # Dialogue processing with graceful error fallback
     dm = DialogueManager()
@@ -88,7 +85,7 @@ async def send_message(req: ChatRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/history/{case_id}")
-async def get_chat_history(case_id: str, db: Session = Depends(get_db)):
+async def get_chat_history(case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """Return all dialogue turns for a case, ordered by turn number."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:

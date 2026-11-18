@@ -140,17 +140,17 @@ Email: {contact['email']}
 
 Date: {today}
 
-Subject: Formal Grievance — Order {case.order_id or 'N/A'} | {case.issue_category or 'Consumer Complaint'}
+Subject: Formal Grievance — Order {case.order_id or '[NOT PROVIDED]'} | {case.issue_category or 'Consumer Complaint'}
 
 Dear Sir/Madam,
 
-I am writing to formally escalate my grievance regarding Order ID: {case.order_id or 'N/A'} placed on {case.platform or 'your platform'}.
+I am writing to formally escalate my grievance regarding Order ID: {case.order_id or '[NOT PROVIDED]'} placed on {case.platform or 'your platform'}.
 
 1. ISSUE SUMMARY
-   Category : {case.issue_category or 'N/A'}
-   Amount   : ₹{case.amount or 'N/A'}
-   Date     : {case.incident_date or 'N/A'}
-   Platform : {case.platform or 'N/A'}
+   Category : {case.issue_category or '[NOT PROVIDED]'}
+   Amount   : ₹{case.amount or '[NOT PROVIDED]'}
+   Date     : {case.incident_date or '[NOT PROVIDED]'}
+   Platform : {case.platform or '[NOT PROVIDED]'}
 
 2. TIMELINE OF EVENTS
 {timeline}
@@ -164,7 +164,7 @@ I am writing to formally escalate my grievance regarding Order ID: {case.order_i
 5. RELIEF SOUGHT
    {case.resolution_sought or 'Full resolution of the issue as per Consumer Protection Act, 2019.'}
 
-I request that this matter be resolved within 15 days as mandated under the Consumer Protection (E-Commerce) Rules, 2020.  Failing a satisfactory resolution, I shall be compelled to escalate this complaint to the National Consumer Helpline (NCH) and, if necessary, the Consumer Disputes Redressal Commission via e-Jagriti.
+Under Rule 4(5) of the Consumer Protection (E-Commerce) Rules, 2020, the Grievance Officer is required to acknowledge this complaint within forty-eight hours and redress it within one month of receipt.  Failing a satisfactory resolution, I shall be compelled to escalate this complaint to the National Consumer Helpline (NCH) and, if necessary, the Consumer Disputes Redressal Commission via e-Jagriti.
 
 Yours sincerely,
 [Consumer Name]
@@ -174,7 +174,7 @@ Case Reference: {case.id}
         draft = GeneratedDraft(
             case_id=case.id,
             draft_type="platform_email",
-            title=f"Platform Grievance Email — Order {case.order_id or 'N/A'}",
+            title=f"Platform Grievance Email — Order {case.order_id or '[NOT PROVIDED]'}",
             content=content,
             tier=EscalationTier.TIER_1_PLATFORM.value,
             metadata_json={
@@ -223,18 +223,18 @@ Case Reference : {case.id}
    (To be filled by the consumer)
 
 2. OPPOSITE PARTY (PLATFORM)
-   Platform    : {case.platform or 'N/A'}
-   Order ID    : {case.order_id or 'N/A'}
+   Platform    : {case.platform or '[NOT PROVIDED]'}
+   Order ID    : {case.order_id or '[NOT PROVIDED]'}
 
 3. COMPLAINT CATEGORY
-   Issue Type  : {case.issue_category or 'N/A'}
-   Amount (₹)  : {case.amount or 'N/A'}
-   Incident Date: {case.incident_date or 'N/A'}
+   Issue Type  : {case.issue_category or '[NOT PROVIDED]'}
+   Amount (₹)  : {case.amount or '[NOT PROVIDED]'}
+   Incident Date: {case.incident_date or '[NOT PROVIDED]'}
 
 4. STATEMENT OF FACTS
-   The consumer placed an order (ID: {case.order_id or 'N/A'}) on {case.platform or 'the platform'} \
-for ₹{case.amount or 'N/A'} on {case.incident_date or 'N/A'}.  The issue experienced is: \
-{case.issue_category or 'N/A'}.  Customer support was {'contacted' if case.customer_support_contacted else 'not contacted'}.
+   The consumer placed an order (ID: {case.order_id or '[NOT PROVIDED]'}) on {case.platform or 'the platform'} \
+for ₹{case.amount or '[NOT PROVIDED]'} on {case.incident_date or '[NOT PROVIDED]'}.  The issue experienced is: \
+{case.issue_category or '[NOT PROVIDED]'}.  Customer support was {'contacted' if case.customer_support_contacted else 'not contacted'}.
 
 5. TIMELINE OF EVENTS
 {timeline}
@@ -265,7 +265,7 @@ HOW TO FILE:
         draft = GeneratedDraft(
             case_id=case.id,
             draft_type="nch_summary",
-            title=f"NCH Complaint Summary — Order {case.order_id or 'N/A'}",
+            title=f"NCH Complaint Summary — Order {case.order_id or '[NOT PROVIDED]'}",
             content=content,
             tier=EscalationTier.TIER_2_NCH.value,
             metadata_json={
@@ -334,7 +334,7 @@ HOW TO FILE:
         if esc_history:
             esc_lines = "\n".join(
                 f"   {_format_date(eh.timestamp)}: {eh.from_stage} → {eh.to_stage} "
-                f"({eh.reason or 'N/A'})"
+                f"({eh.reason or '[NOT PROVIDED]'})"
                 for eh in esc_history
             )
         else:
@@ -354,10 +354,10 @@ SECTION A: LIST OF DATES
 {'─' * 60}
 SECTION B: STATEMENT OF FACTS
 {'─' * 60}
-1. The Complainant placed Order ID: {case.order_id or 'N/A'} on {case.platform or 'the e-commerce platform'} \
-on {case.incident_date or 'the date of incident'} for a total consideration of ₹{case.amount or 'N/A'}.
+1. The Complainant placed Order ID: {case.order_id or '[NOT PROVIDED]'} on {case.platform or 'the e-commerce platform'} \
+on {case.incident_date or 'the date of incident'} for a total consideration of ₹{case.amount or '[NOT PROVIDED]'}.
 
-2. Nature of Grievance: {case.issue_category or 'N/A'}.
+2. Nature of Grievance: {case.issue_category or '[NOT PROVIDED]'}.
 
 3. The Complainant {'contacted' if case.customer_support_contacted else 'did not contact'} the platform's \
 customer support regarding this issue.
@@ -407,7 +407,7 @@ Applicable Jurisdiction:
         draft = GeneratedDraft(
             case_id=case.id,
             draft_type="ejagriti_package",
-            title=f"e-Jagriti Filing Package — Order {case.order_id or 'N/A'}",
+            title=f"e-Jagriti Filing Package — Order {case.order_id or '[NOT PROVIDED]'}",
             content=content,
             tier=EscalationTier.TIER_3_EJAGRITI.value,
             metadata_json={

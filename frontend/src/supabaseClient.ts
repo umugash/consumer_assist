@@ -56,6 +56,12 @@ export async function signInWithGoogleSupabase(): Promise<void> {
   }
 }
 
+export async function getAccessToken(): Promise<string | null> {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
 export async function signOutUser(): Promise<void> {
   if (supabase) {
     await supabase.auth.signOut();

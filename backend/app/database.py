@@ -12,7 +12,12 @@ def _create_engine():
     db_url = settings.DATABASE_URL
     if db_url and not db_url.startswith("sqlite"):
         if db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
-            db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+            try:
+                import psycopg2  # noqa: F401
+                driver = "psycopg2"
+            except ImportError:
+                driver = "psycopg"  # psycopg v3 is what requirements.txt installs on Vercel
+            db_url = db_url.replace("postgresql://", f"postgresql+{driver}://", 1)
         try:
             eng = create_engine(
                 db_url,
@@ -26,7 +31,7 @@ def _create_engine():
             logger.info("Successfully connected to PostgreSQL/Supabase database.")
             return eng
         except Exception as exc:
-            logger.warning(f"PostgreSQL connection failed ({exc}). Falling back to resilient SQLite.")
+            logger.error(f"PostgreSQL connection failed ({type(exc).__name__}). Falling back to EPHEMERAL SQLite - data will not persist.")
 
     # SQLite fallback
     sqlite_path = "/tmp/consumer_assist.db" if (os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")) else _DEFAULT_DB_PATH
@@ -37,6 +42,7 @@ def _create_engine():
     )
 
 engine = _create_engine()
+DB_BACKEND = engine.dialect.name  # surfaced by /api/health
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

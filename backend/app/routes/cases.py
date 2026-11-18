@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.auth import current_user, owned_case
 from app.models import Case, GeneratedDraft
 from app.schemas import (
     CaseOverview,
@@ -25,19 +26,14 @@ router = APIRouter(prefix="/api/cases", tags=["Cases"])
 
 
 @router.get("/", response_model=List[CaseOverview])
-def list_cases(user_id: Optional[str] = None, user_email: Optional[str] = None, db: Session = Depends(get_db)):
-    """List all registered consumer grievance cases (user-scoped if user_id or user_email provided)."""
-    query = db.query(Case)
-    if user_id:
-        query = query.filter((Case.user_id == user_id) | (Case.user_email == user_email) | (Case.user_id == None))
-    elif user_email:
-        query = query.filter((Case.user_email == user_email) | (Case.user_id == None))
-    cases = query.order_by(Case.created_at.desc()).all()
+def list_cases(user: dict = Depends(current_user), db: Session = Depends(get_db)):
+    """List the signed-in user's cases. Identity comes from the verified token, never the query string."""
+    cases = db.query(Case).filter(Case.user_id == user["id"]).order_by(Case.created_at.desc()).all()
     return cases
 
 
 @router.delete("/{case_id}")
-def delete_case(case_id: str, db: Session = Depends(get_db)):
+def delete_case(case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """Delete a case and all associated cascade records."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
@@ -48,7 +44,7 @@ def delete_case(case_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{case_id}", response_model=CaseDetail)
-def get_case(case_id: str, db: Session = Depends(get_db)):
+def get_case(case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """Fetch complete case details including turns, timeline, evidence, and drafts."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
@@ -132,7 +128,7 @@ def get_case(case_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{case_id}/timeline", response_model=TimelineResponse)
-def get_case_timeline(case_id: str, db: Session = Depends(get_db)):
+def get_case_timeline(case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """Reconstruct timeline, perform chronological ordering and conflict detection."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
@@ -163,7 +159,7 @@ def get_case_timeline(case_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{case_id}/evidence-gaps", response_model=EvidenceGapResponse)
-def get_evidence_gaps(case_id: str, db: Session = Depends(get_db)):
+def get_evidence_gaps(case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """Run evidence-gap analysis against requirements for the case's category."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
@@ -189,7 +185,7 @@ def get_evidence_gaps(case_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{case_id}/escalate", response_model=EscalationResponse)
-def escalate_case(case_id: str, req: EscalationRequest, db: Session = Depends(get_db)):
+def escalate_case(req: EscalationRequest, case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """Advance or transition workflow stage across the 12 stages and 3 tiers."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
@@ -214,7 +210,7 @@ def escalate_case(case_id: str, req: EscalationRequest, db: Session = Depends(ge
 
 
 @router.post("/{case_id}/generate-draft", response_model=DraftResponse)
-def generate_draft(case_id: str, req: DraftRequest, db: Session = Depends(get_db)):
+def generate_draft(req: DraftRequest, case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """Generate structured legal/grievance drafts grounded strictly in case evidence."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
@@ -253,7 +249,7 @@ def generate_draft(case_id: str, req: DraftRequest, db: Session = Depends(get_db
 
 
 @router.get("/{case_id}/drafts")
-def list_drafts(case_id: str, db: Session = Depends(get_db)):
+def list_drafts(case_id: str, _owner: Case = Depends(owned_case), db: Session = Depends(get_db)):
     """List all generated drafts for the specified case."""
     drafts = db.query(GeneratedDraft).filter(GeneratedDraft.case_id == case_id).order_by(GeneratedDraft.generated_at.desc()).all()
     return [

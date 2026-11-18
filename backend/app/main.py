@@ -146,6 +146,18 @@ except Exception:
 # ── Root Endpoint ──────────────────────────────────────────────────────────
 
 
+@app.get("/api/health")
+async def health():
+    """Non-secret deployment diagnostics: which backends are configured (booleans only)."""
+    from app.database import DB_BACKEND
+    from app.services.llm_service import _get_api_keys
+    from app.auth import _supabase
+    openai_key, gemini_key = _get_api_keys()
+    url, key = _supabase()
+    return {"database": DB_BACKEND, "gemini_configured": bool(gemini_key), "gemini_model": settings.GEMINI_MODEL,
+            "openai_configured": bool(openai_key), "auth_configured": bool(url and key)}
+
+
 @app.get("/")
 @app.get("/api")
 @app.get("/api/")

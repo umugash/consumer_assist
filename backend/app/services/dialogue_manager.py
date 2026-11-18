@@ -20,7 +20,11 @@ from app.services.nlp_extractor import (
     resolve_platform,
     disambiguate_amount,
 )
-from app.services.llm_service import chat_with_llm
+from app.services.llm_service import chat_with_llm, is_cod_message
+
+_ADVANCE_RE = re.compile(r"\b(skip|proceed|next stage|advance stage|move on)\b")
+_CORRECTION_RE = re.compile(r"\b(actually|sorry|correction|correct(?:ed)? (?:it|amount|date)|not .* but|instead|changed?|wrong(?:ly)?)\b")
+_EARLY_STAGES = (WorkflowStage.INTAKE.value, WorkflowStage.CLASSIFICATION.value, WorkflowStage.SLOT_FILLING.value)
 
 logger = logging.getLogger(__name__)
 
@@ -150,10 +154,22 @@ class DialogueManager:
         bot_message = llm_res.get("bot_message", "")
         llm_slots = llm_res.get("extracted_slots", {})
 
+        llm_live = llm_res.get("provider_used") in ("gemini", "openai")
         logger.info(f"LLM routed intent '{intent_action}' with provider '{llm_res.get('provider_used')}'")
 
         # 2. Handle Advance / Skip Intent ──────────────────────────────────
-        if intent_action == "advance_stage" or any(w in clean_text_lower for w in ["skip", "proceed", "next stage", "advance stage"]):
+        wants_advance = intent_action == "advance_stage" or (
+            intent_action != "answer_query" and _ADVANCE_RE.search(clean_text_lower)
+        )
+        if wants_advance and case.workflow_stage in _EARLY_STAGES and self._get_missing_slots(case):
+            # Stage gate: the core case facts must exist before evidence/drafting stages.
+            missing = self._get_missing_slots(case)
+            bot_reply = (
+                "Before we move on I still need a few case details, so the notice is accurate. "
+                + SLOT_QUESTIONS.get(missing[0], f"Could you share the {missing[0].replace('_', ' ')}?")
+            )
+            return self._record_turns_and_return(case, user_message, bot_reply, intent="advance_blocked", slots_updated={}, db=db)
+        if wants_advance:
             if case.workflow_stage == WorkflowStage.EVIDENCE_INGESTION.value:
                 case.workflow_stage = WorkflowStage.TIMELINE_RECONSTRUCTION.value
                 from app.services.timeline_evidence_engine import TimelineEngine
@@ -184,16 +200,20 @@ class DialogueManager:
 
         # 3. Handle Question Answering (e.g., "ok what to do in stage 5") ──
         if intent_action == "answer_query" or (
-            any(q in clean_text_lower for q in ["what", "how", "explain", "tell me", "can i", "why"])
+            not llm_live
+            and any(q in clean_text_lower for q in ["what", "how", "explain", "tell me", "can i", "why"])
             and not any(slot_k in clean_text_lower for slot_k in ["order id is", "ref is", "amount is", "placed at"])
         ):
+            reply = bot_message or "Good question. I'm keeping all your case details as they are."
+            missing = self._get_missing_slots(case)
+            if not llm_live and case.workflow_stage in _EARLY_STAGES and missing:
+                reply += "\n\nWhenever you're ready: " + SLOT_QUESTIONS.get(missing[0], "")
             return self._record_turns_and_return(
-                case, user_message, bot_message, intent="answer_query", slots_updated={}, db=db
+                case, user_message, reply, intent="answer_query", slots_updated={}, db=db
             )
 
         # 4. Handle Contextual Evidence Waiver (e.g. COD / Cash on Delivery)
-        cod_phrases = ["cod", "cash on delivery", "paid as cod", "paid by cash", "cash payment", "paid in cash"]
-        if intent_action == "waive_evidence" or any(cp in clean_text_lower for cp in cod_phrases):
+        if intent_action == "waive_evidence" or (not llm_live and is_cod_message(clean_text_lower)):
             from app.services.timeline_evidence_engine import EvidenceEngine
             ev_engine = EvidenceEngine()
 
@@ -277,15 +297,22 @@ class DialogueManager:
                 if val and "resolution_sought" not in llm_slots:
                     llm_slots["resolution_sought"] = val
 
-        # Merge slots from LLM output first
+        # Merge slots from LLM output first. The LLM is told to return only values
+        # stated in this message, so a value here is new info or an explicit correction.
         for k, v in llm_slots.items():
-            if v is not None and hasattr(case, k):
-                cur_val = getattr(case, k, None)
-                if cur_val is None or cur_val == "" or cur_val is False:
-                    casted = _cast_slot_value(k, str(v))
-                    if casted is not None:
-                        setattr(case, k, casted)
-                        slots_updated[k] = casted
+            if v is not None and k in SLOT_NAMES and hasattr(case, k):
+                casted = v if isinstance(v, bool) else _cast_slot_value(k, str(v))
+                if casted is not None and casted != getattr(case, k, None):
+                    setattr(case, k, casted)
+                    slots_updated[k] = casted
+
+        # Rule-based extraction below is the offline fallback only; when the LLM ran,
+        # it already disambiguated platform/amount in context and must not be overridden.
+        is_correction = bool(_CORRECTION_RE.search(clean_text_lower))
+        def _can_set(slot: str) -> bool:
+            if llm_live or slot in slots_updated:
+                return False
+            return getattr(case, slot, None) in (None, "") or is_correction
 
         # Check what the assistant last asked for
         last_turn = (
@@ -309,7 +336,7 @@ class DialogueManager:
                 expected_slot = "incident_date"
 
         # Semantic Resolution / Relief (Remedy) Slot Extraction
-        if "resolution_sought" not in slots_updated and (not case.resolution_sought):
+        if _can_set("resolution_sought"):
             if expected_slot == "resolution_sought" or any(w in clean_text_lower for w in ["inform", "feedback", "nothing", "refund", "replace", "compensation", "apology", "just inform", "no money", "no refund"]):
                 if any(w in clean_text_lower for w in ["inform", "nothing", "feedback", "notice", "aware"]):
                     res_val = "Inform the platform / No monetary claim"
@@ -330,7 +357,7 @@ class DialogueManager:
         amount_entities = [e for e in entities if e.get("type") == "AMOUNT"]
         other_entities = [e for e in entities if e.get("type") not in ("PLATFORM", "AMOUNT")]
 
-        if "platform" not in slots_updated:
+        if _can_set("platform"):
             platform_candidates = [p["value"] for p in platform_entities]
             resolved_plat = resolve_platform(user_message, platform_candidates)
             if resolved_plat:
@@ -338,14 +365,14 @@ class DialogueManager:
                 slots_updated["platform"] = resolved_plat
 
         # Amount disambiguation
-        if "amount" not in slots_updated:
+        if _can_set("amount"):
             resolved_amt = disambiguate_amount(user_message, entities)
             if resolved_amt is not None:
                 case.amount = resolved_amt
                 slots_updated["amount"] = resolved_amt
 
         # Order ID pattern matching
-        if "order_id" not in slots_updated:
+        if _can_set("order_id"):
             order_entities = [e for e in entities if e.get("type") == "ORDER_ID"]
             if order_entities:
                 case.order_id = order_entities[0]["value"]
@@ -372,16 +399,15 @@ class DialogueManager:
                 confidence=ent.get("confidence", 1.0),
             ))
 
-            if slot_name and slot_name not in slots_updated:
-                current_val = getattr(case, slot_name, None)
-                if current_val is None or current_val == "" or current_val is False:
+            if slot_name and _can_set(slot_name):
+                if True:
                     val_to_cast = norm_val if slot_name == "incident_date" else evalue
                     casted = _cast_slot_value(slot_name, val_to_cast)
                     if casted is not None:
                         setattr(case, slot_name, casted)
                         slots_updated[slot_name] = casted
 
-        if not case.issue_category and intent != "unknown":
+        if not llm_live and not case.issue_category and intent != "unknown":
             for cat in IssueCategory:
                 if intent.lower() in (cat.value.lower(), cat.name.lower()):
                     case.issue_category = cat.value
@@ -399,7 +425,9 @@ class DialogueManager:
 
         # 8. Generate Assistant Response ──────────────────────────────────
         if case.workflow_stage == WorkflowStage.SLOT_FILLING.value and missing:
-            assistant_message = self._build_slot_prompt(case, missing, slots_updated)
+            # Gemini already sees the missing-slot list; use its natural reply when live.
+            assistant_message = (bot_message if llm_live and bot_message
+                                 else self._build_slot_prompt(case, missing, slots_updated))
         elif case.workflow_stage == WorkflowStage.EVIDENCE_INGESTION.value:
             if prev_stage == WorkflowStage.SLOT_FILLING.value or not missing:
                 assistant_message = self._build_stage4_intro(case, slots_updated)
