@@ -1,6 +1,6 @@
 """Pydantic schemas for API request/response validation."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -9,7 +9,14 @@ from datetime import datetime
 
 class ChatRequest(BaseModel):
     case_id: Optional[str] = None
-    message: str
+    message: str = Field(..., min_length=1, max_length=4000)
+
+    @field_validator("message")
+    @classmethod
+    def _not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Message cannot be empty")
+        return v.strip()
     user_id: Optional[str] = None
     user_email: Optional[str] = None
     

@@ -527,12 +527,8 @@ def _local_fallback_router(
         else:
             res_val = user_message.strip()[:100]
 
+        # Keep going: the same message often also carries platform/amount/date.
         extracted_slots["resolution_sought"] = res_val
-        return {
-            "bot_message": f"Got it — I have recorded your preferred resolution: **{res_val}**.",
-            "extracted_slots": extracted_slots,
-            "intent_action": "slot_fill",
-        }
 
     # 6. Slot Extraction & Entity Disambiguation
     entities = extract_entities(user_message)

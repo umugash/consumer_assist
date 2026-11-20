@@ -124,3 +124,8 @@ def test_provider_failure_falls_back_to_local(monkeypatch):
     # premature advance is blocked while required slots are missing
     DialogueManager().process_message(case, "proceed", db)
     assert case.workflow_stage in ("1. Intake & Greeting", "2. Issue Classification", "3. Slot Filling")
+
+
+def test_empty_or_oversized_message_rejected(client):
+    for msg in ("", "   ", "x" * 4001):
+        assert client.post("/api/chat/send", json={"message": msg}, headers=A).status_code == 422
